@@ -1,0 +1,209 @@
+
+  SIDPlayer
+  A SID tune replayer
+
+  Copyright (C) 1996-2004 Christian Bauer
+
+
+License
+-------
+
+SIDPlayer is available under the terms of the GNU General Public License.
+See the file "COPYING" that is included in the distribution for details.
+
+
+What is SIDPlayer?
+------------------
+
+SIDPlayer is a replayer program for C64 music ("SID tunes"), like PlaySID on
+the Amiga or SIDPLAY for Unix. You can think of it as being a stripped-down
+C64 emulator that only emulates the CPU and the sound chip of the C64.
+SIDPlayer can replay SID tunes in the "PSID" file format, but it cannot run
+any C64 programs.
+
+
+Why would I want to listen to C64 music?
+----------------------------------------
+
+The C64 had the most advanced sound capabilities of all home computers in
+the early 80's. While other computers of that time were only able to produce
+beeps, the C64 had a complete 3-voice analog synthesizer on its MOS 6581
+sound chip (called "SID" - "Sound Interface Device"). Even some more modern
+computers (as the Atari ST or the first Macs) had worse sound.
+
+The SID chip features three oscillators with selectable waveform, ADSR
+envelope generators, programmable resonance filters and special effects like
+ring modulation. With the aid of the CPU, it can also replay 4-bit sampled
+sounds. SIDPlayer emulates all features of the SID chip, including the
+filters.
+
+There were (and are still) many composers programming excellent music for
+the C64 and thousands of tunes have been converted for use with SID tune
+replayers on nearly every existing computer platform. One big advantage of
+SID tunes is that they take very little hard disk space: most are only 4-8K
+in size.
+
+
+System Requirements
+-------------------
+
+SIDPlayer runs on all Unix systems supported by SDL (which includes Linux,
+FreeBSD, Solaris and Irix) and on BeOS R4.5 or later versions.
+
+Successfully tested systems include:
+ - Linux/i386
+ - BeOS/x86 R5
+ - BeOS/ppc R5
+
+
+Supported file formats
+----------------------
+
+The only SID tune file format supported by SIDPlayer is single-file PSID
+files (these have the signature "PSID" in the first 4 bytes). Most SID music
+available on the Internet is in this format.
+
+
+Installing SIDPlayer
+--------------------
+
+See the file "INSTALL".
+
+
+Using SIDPlayer under BeOS
+--------------------------
+
+SIDPlayer can be started from the Tracker or from the Shell. If you give the
+name of a PSID file as an argument from the Shell or drag a PSID file onto
+the SIDPlayer icon from the Tracker, that file is loaded and played.
+
+The SIDPlayer window displays some information about the currently loaded
+PSID file and has the usual tapedeck-like controls for pausing, restarting
+and stopping the replay and for selecting the next or previous song
+contained in the PSID file. The number of the song currently playing and the
+total number of songs in the loaded PSID file are displayed to the right of
+the tapedeck buttons. The slider in the bottom right of the window can be
+used to adjust the replay speed.
+
+The SIDPlayer menu has three items:
+
+ - "About SIDPlayer" shows some information about SIDPlayer
+ - "Sound Control" opens the sound control window (see below)
+ - "Quit" quits SIDPlayer
+
+To load another PSID file, drag it into the SIDPlayer window. To quit
+SIDPlayer, close the window or select the "Quit" menu item.
+
+Some functions of SIDPlayer can also be controlled with the keyboard:
+  P          : Play/pause
+  S          : Stop
+  N          : Next song
+  Esc/Space  : Stop
+  Left arrow : Previous song
+  Right arrow: Next song
+  Q          : Quit
+
+
+Using SIDPlayer under Unix
+--------------------------
+
+SIDPlayer currently only works as a command line application. It is invoked
+as follows:
+
+  sidplayer FILE [song_number]
+
+"FILE" is the name of the PSID file to be loaded. The optional "song_number"
+specifies the number of the song to be player (instead of the default song).
+SIDPlayer cannot detect when a song has finished, so you have to use Ctrl-C
+to quit it.
+
+SIDPlayer accepts a number of command line arguments. Type "sidplayer --help"
+to get a list.
+
+If you have a Catweasel MK3 PCI card with a SID chip installed you can
+redirect the output of SIDPlayer to the card by specifying the "--cwsid on"
+command line argument. Visit www.jschoenfeld.de for more information about
+the Catweasel card.
+
+
+The Sound Control window (BeOS only)
+------------------------------------
+
+Sound post-processing is controlled with the "Effect" pop-up menu and the
+"Delay" and "Feedback" sliders. The available effects are "None" (no post-
+processing), "Reverb" (simple reverb) and "Spatial" (reverb with phase
+shift, intended for headphone users).
+
+The checkbox labeled "Filters" is used to turn the emulation of the SID
+filters on or off.
+
+The "New SID Chip" checkbox selects the type of SID chip to be emulated.
+Currently this only affects some combined waveforms.
+
+The eight slider gadgets in the right part of the window control the stereo
+panning and volume of each of the four voices (3 synthesized voices, 1
+sampled voice).
+
+
+Where do I get PSID files
+-------------------------
+
+The two largest collections of SID tunes are the "High Voltage" SID
+Collection (http://hvsc.c64.org) and the "NemeSIDs" archive
+(ftp://frodo.hiof.no/pub/c64/sidmusic). These have been used for testing
+during the development of SIDPlayer and they should all work.
+
+Twenty demonstration SID tunes are included with SIDPlayer in the "PSID
+Demo" directory.
+
+
+Support
+-------
+
+Updates of SIDPlayer are available on the official SIDPlayer home page:
+
+  http://www.uni-mainz.de/~bauec002/SPMain.html
+
+
+History
+-------
+
+V1.0 - First release
+V2.0 - SID filter emulation, better envelope generation
+V2.1 - Implemented notch filter, 60Hz replay now works, added faster/
+       slower buttons, compiled for BeOS DR8
+V2.2 - Improved the 6510, triangle waveform is now 12 bits, output
+       clipping, stereo output, corrected SID sustain behaviour,
+       reading from a write-only SID register returns the last byte
+       written to the SID, combined waveforms sampled from a 6581R4
+V2.3 - Corrected BRK, DCP, ARR and LAS instructions, volume levels up
+       to 200% possible, compiled for BeOS DR9
+V2.4 - Shows name/author/copyright in ISO-Latin1
+V2.5 - Converted panning/volume sliders to BSlider class
+V3.0 - Unified PPC/x86 release
+V4.0 - Now based on Frodo V5 CPU/SID code (more efficient CPU emulation,
+       post-processing effects (reverb, spatial), prefs manager), replaced
+       faster/slower buttons by slider, added popup menu and sound control
+       window, ported to BeOS R5 with new Media Kit, implemented CIA timer
+       speed control, and SIDPlayer can now also be used as a CL-Amp plugin
+V4.1 - Runs as a command line application under Unix (requiring SDL),
+       preferences items can be passed on the command line, and SIDPlayer
+       can now also be used as a SoundPlay plugin
+V4.2 - Fixed writes to mirrored SID registers, output to WAV file is possible
+       in SDL version
+V4.3 - Added support for Catweasel SID hardware in SDL version (use option
+       "--cwsid on"), CIA timer speed control now actually works
+V4.4 - Fixed a problem with the wrong replay routine being called when the
+       IRQ vector was changed. Mastercomposer tunes (and probably others)
+       not play correctly. [Thanks to Stefano Tognon.]
+
+
+Acknowledgements
+----------------
+
+Special thanks go to Claes Löfqvist and Marco Nelissen for their help with
+adding CL-Amp and SoundPlay plugin support.
+
+
+Christian Bauer
+<Christian.Bauer@uni-mainz.de>
