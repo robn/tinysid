@@ -5,8 +5,6 @@ SUBDIRS = src
 # Requires automake 1.5
 AUTOMAKE_OPTIONS = 1.5 foreign
 
-EXTRA_DIST = Makefile.BeOS
-
 # Add spec file, PSID demo files and Frodo sources to distribution
 dist-hook:
 	cp SIDPlayer.spec $(distdir)

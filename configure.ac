@@ -28,8 +28,6 @@ AC_OUTPUT([
 Makefile
 SIDPlayer.spec
 src/Makefile
-src/clamp_includes/Makefile
-src/soundplay_includes/Makefile
 ])
 
 dnl Print summary.
