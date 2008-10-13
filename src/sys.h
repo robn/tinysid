@@ -25,8 +25,6 @@
 #include "config.h"
 #endif
 
-#include <string>
-
 #include "types.h"
 
 
