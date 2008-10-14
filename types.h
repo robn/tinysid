@@ -21,7 +21,6 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#ifdef SDL
 #include <SDL_types.h>
 typedef Uint8 uint8;
 typedef Sint8 int8;
@@ -31,7 +30,6 @@ typedef Uint32 uint32;
 typedef Sint32 int32;
 typedef Uint64 uint64;
 typedef Sint64 int64;
-#endif
 
 typedef enum { false = 0, true = 1 } bool;
 

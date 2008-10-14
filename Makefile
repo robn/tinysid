@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -ggdb $(shell sdl-config --cflags) -DSDL -DSID_PLAYER -DPACKAGE=\"sidplayer\" -DVERSION=\"4.4\"
+CFLAGS = -Wall -ggdb $(shell sdl-config --cflags) -DSID_PLAYER
 LDFLAGS = $(shell sdl-config --libs)
 
 OBJECTS = cpu.o main.o main_sdl.o mem.o prefs.o prefs_items.o sid.o

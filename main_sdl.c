@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 {
     // Print banner
     printf(
-        PACKAGE " Version " VERSION "\n\n"
+        "SIDPlayer Version 4.4\n\n"
         "Copyright (C) 1996-2004 Christian Bauer\n"
         "E-mail: Christian.Bauer@uni-mainz.de\n"
         "http://www.uni-mainz.de/~bauec002/\n\n"
