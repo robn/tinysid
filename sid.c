@@ -20,10 +20,6 @@
 
 #include "sys.h"
 
-#ifndef SID_PLAYER
-#include <SDL.h>
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,13 +29,8 @@
 #include "main.h"
 #include "prefs.h"
 
-#ifdef SID_PLAYER
 #include "mem.h"
 #include "cpu.h"
-#else
-#include "util.h"
-#include "snapshot.h"
-#endif
 
 #define DEBUG 0
 #include "debug.h"
@@ -92,7 +83,6 @@ static int32 dual_sep;
 static uint32 sid_cycles;        // Integer
 static filt_t sid_cycles_frac;    // With fractional part
 
-#ifdef SID_PLAYER
 // Phi2 clock frequency
 static cycle_t cycles_per_second;
 const float PAL_CLOCK = 985248.444;
@@ -106,7 +96,6 @@ static int speed_adjust;        // Speed adjustment in percent
 
 // Clock frequency changed
 void SIDClockFreqChanged();
-#endif
 
 // Resonance frequency polynomials
 static inline float CALC_RESONANCE_LP(float f)
@@ -231,7 +220,6 @@ struct osid_t {
     uint16 v4_left_gain;                // Gain of voice 4 on left channel (12.4 fixed)
     uint16 v4_right_gain;                // Gain of voice 4 on right channel (12.4 fixed)
 
-#ifdef SID_PLAYER
     int v4_state;                        // State of voice 4 (Galway noise/samples)
     uint32 v4_count;                    // Counter for voice 4
     uint32 v4_add;                        // Added to counter in every frame
@@ -250,7 +238,6 @@ struct osid_t {
     uint16 sm_volume;                    // Sample volume (0..2, 0=loudest)
     uint8 sm_rep_count;                    // Sample repeat counter (0xff=continous)
     bool sm_big_endian;                    // Flag: Sample is big-endian
-#endif
 };
 osid_t *sid1 = NULL, *sid2 = NULL;
 
@@ -452,7 +439,6 @@ static filt_t ffreq_lp[256];    // Low-pass resonance frequency table
 static filt_t ffreq_hp[256];    // High-pass resonance frequency table
 
 // Table for sampled voices
-#ifdef SID_PLAYER
 static const int16 sample_tab[16 * 3] = {
     0x8000, 0x9111, 0xa222, 0xb333, 0xc444, 0xd555, 0xe666, 0xf777,
     0x0888, 0x1999, 0x2aaa, 0x3bbb, 0x4ccc, 0x5ddd, 0x6eee, 0x7fff,
@@ -465,12 +451,6 @@ static const int16 sample_tab[16 * 3] = {
 };
 
 static int16 galway_tab[16 * 64];
-#else
-static const int16 sample_tab[16] = {
-    0x8000, 0x9111, 0xa222, 0xb333, 0xc444, 0xd555, 0xe666, 0xf777,
-    0x0888, 0x1999, 0x2aaa, 0x3bbb, 0x4ccc, 0x5ddd, 0x6eee, 0x7fff
-};
-#endif
 
 // Work buffer and variables for audio effects
 #define WORK_BUFFER_SIZE 0x10000
@@ -480,13 +460,6 @@ static int rev_feedback = 0;
 
 // Prototypes
 static void calc_buffer(void *userdata, uint8 *buf, int count);
-
-#ifndef SID_PLAYER
-static void sid1_chunk_read(size_t size);
-static bool sid1_chunk_write();
-static void sid2_chunk_read(size_t size);
-static bool sid2_chunk_write();
-#endif
 
 
 /*
@@ -510,16 +483,8 @@ void osid_init(osid_t *sid, int n)
 
 static void set_desired_samples(int32 sample_rate)
 {
-    if (sample_rate < 15000)
-        desired.samples = 256;
-    else if (sample_rate < 30000)
-        desired.samples = 512;
-    else
-        desired.samples = 1024;
-#ifdef SID_PLAYER
     // Music replay doesn't need low latency
     desired.samples *= 8;
-#endif
 }
 
 static void set_rev_delay(int32 delay_ms)
@@ -685,7 +650,6 @@ static void prefs_dualsep_changed(const char *name, int32 from, int32 to)
     calc_gains();
 }
 
-#ifdef SID_PLAYER
 static void set_cycles_per_second(const char *to)
 {
     if (strncmp(to, "6569", 4) == 0)
@@ -706,7 +670,6 @@ static void prefs_speed_changed(const char *name, int32 from, int32 to)
 {
     speed_adjust = to;
 }
-#endif
 
 void SIDInit()
 {
@@ -734,12 +697,10 @@ void SIDInit()
     PrefsSetCallbackBool("filters", prefs_filters_changed);
     PrefsSetCallbackBool("dualsid", prefs_dualsid_changed);
 
-#ifdef SID_PLAYER
     set_cycles_per_second(PrefsFindString("victype", 0));
     speed_adjust = PrefsFindInt32("speed");
     PrefsSetCallbackString("victype", prefs_victype_changed);
     PrefsSetCallbackInt32("speed", prefs_speed_changed);
-#endif
 
     audio_effect = PrefsFindInt32("audioeffect");
     rev_feedback = PrefsFindInt32("revfeedback");
@@ -775,12 +736,11 @@ void SIDInit()
     // Open audio device
     desired.callback = calc_buffer;
     desired.userdata = NULL;
-#ifdef SID_PLAYER
+
     if (SDL_OpenAudio(&desired, &obtained) < 0) {
         fprintf(stderr, "Couldn't initialize audio (%s)\n", SDL_GetError());
         exit(1);
     }
-#endif
 
     // Convert reverb delay to sample frame count
     set_rev_delay(PrefsFindInt32("revdelay"));
@@ -805,19 +765,10 @@ void SIDInit()
 #endif
     }
 
-#ifdef SID_PLAYER
     // Compute galway noise table
     for (i=0; i<16; i++)
         for (j=0; j<64; j++)
             galway_tab[i * 64 + j] = sample_tab[(i * j) & 0x0f];
-#else
-    // Register snapshot chunk
-    SnapshotRegisterChunk('S', 'I', 'D', ' ', sid1_chunk_read, sid1_chunk_write);
-    SnapshotRegisterChunk('S', 'I', 'D', '2', sid2_chunk_read, sid2_chunk_write);
-
-    // Start sound output
-    SDL_PauseAudio(false);
-#endif
 }
 
 
@@ -843,12 +794,8 @@ void osid_reset(osid_t *sid)
     memset(sid->regs, 0, sizeof(sid->regs));
     sid->last_written_byte = 0;
 
-#ifdef SID_PLAYER
     sid->volume = 15;
     sid->regs[24] = 0x0f;
-#else
-    sid->volume = 0;
-#endif
 
     int v;
     for (v=0; v<3; v++) {
@@ -869,7 +816,6 @@ void osid_reset(osid_t *sid)
     sid->xn1_l = sid->xn2_l = sid->yn1_l = sid->yn2_l = F_ZERO;
     sid->xn1_r = sid->xn2_r = sid->yn1_r = sid->yn2_r = F_ZERO;
 
-#ifdef SID_PLAYER
     sid->v4_state = V4_OFF;
     sid->v4_count = sid->v4_add = 0;
 
@@ -883,7 +829,6 @@ void osid_reset(osid_t *sid)
     sid->sm_volume = 0;
     sid->sm_rep_count = 0;
     sid->sm_big_endian = false;
-#endif
 }
 
 void SIDReset(cycle_t now)
@@ -891,9 +836,9 @@ void SIDReset(cycle_t now)
     SDL_LockAudio();
     osid_reset(sid1);
     osid_reset(sid2);
-#ifdef SID_PLAYER
+
     memset(work_buffer, 0, sizeof(work_buffer));
-#endif
+
     SDL_UnlockAudio();
 }
 
@@ -940,7 +885,6 @@ void SIDClockFreqChanged()
 }
 
 
-#ifdef SID_PLAYER
 /*
  *  Set replay frequency
  */
@@ -972,7 +916,6 @@ void cia_th_write(uint8 byte)
 {
     cia_timer = (cia_timer & 0x00ff) | (byte << 8);
 }
-#endif
 
 
 /*
@@ -987,10 +930,6 @@ static void calc_sid(osid_t *sid, int32 *sum_output_left, int32 *sum_output_righ
     sample_count += ((0x138 * 50) << 16) / obtained.freq;
 #else
     uint8 master_volume = sid->volume;
-#endif
-#ifndef SID_PLAYER
-    *sum_output_left += sample_tab[master_volume] << 8;
-    *sum_output_right += sample_tab[master_volume] << 8;
 #endif
 
     int32 sum_output_filter_left = 0, sum_output_filter_right = 0;
@@ -1102,7 +1041,6 @@ static void calc_sid(osid_t *sid, int32 *sum_output_left, int32 *sum_output_righ
         }
     }
 
-#ifdef SID_PLAYER
     // Galway noise/samples
     int32 v4_output = 0;
     switch (sid->v4_state) {
@@ -1154,7 +1092,6 @@ static void calc_sid(osid_t *sid, int32 *sum_output_left, int32 *sum_output_righ
     }
     *sum_output_left += (v4_output * sid->v4_left_gain) >> 4;
     *sum_output_right += (v4_output * sid->v4_right_gain) >> 4;
-#endif
 
     // Filter
     if (enable_filters) {
@@ -1181,16 +1118,8 @@ static void calc_sid(osid_t *sid, int32 *sum_output_left, int32 *sum_output_righ
 static void calc_buffer(void *userdata, uint8 *buf, int count)
 {
     uint16 *buf16 = (uint16 *)buf;
-#ifdef SID_PLAYER
-    int replay_limit = (obtained.freq * 100) / (cycles_per_second / (cia_timer + 1) * speed_adjust);
-#endif
 
-#ifndef SID_PLAYER
-    // Index in sample_buf for reading, 16.16 fixed
-#if 0    //!!
-    uint32 sample_count = (sample_in_ptr + SAMPLE_BUF_SIZE/2) << 16;
-#endif
-#endif
+    int replay_limit = (obtained.freq * 100) / (cycles_per_second / (cia_timer + 1) * speed_adjust);
 
     // Convert buffer length (in bytes) to frame count
     bool is_stereo = (obtained.channels == 2);
@@ -1204,14 +1133,12 @@ static void calc_buffer(void *userdata, uint8 *buf, int count)
     while (count--) {
         int32 sum_output_left = 0, sum_output_right = 0;
 
-#ifdef SID_PLAYER
         // Execute 6510 play routine if due
         if (++replay_count >= replay_limit) {
             replay_count = 0;
             UpdatePlayAdr();
             CPUExecute(play_adr, 0, 0, 0, 1000000);
         }
-#endif
 
         // Calculate output of voices from both SIDs
         calc_sid(sid1, &sum_output_left, &sum_output_right);
@@ -1267,7 +1194,6 @@ static void calc_buffer(void *userdata, uint8 *buf, int count)
     }
 }
 
-#ifdef SID_PLAYER
 void SIDCalcBuffer(uint8 *buf, int count)
 {
     calc_buffer(NULL, buf, count);
@@ -1304,7 +1230,6 @@ void SIDExecute()
     UpdatePlayAdr();
     CPUExecute(play_adr, 0, 0, 0, 1000000);
 }
-#endif
 
 
 /*
@@ -1465,17 +1390,7 @@ uint32 osid_read(osid_t *sid, uint32 adr, cycle_t now)
 
 uint32 sid_read(uint32 adr, cycle_t now)
 {
-#ifdef SID_PLAYER
     return osid_read(sid1, adr & 0x7f, now);
-#else
-    if (dual_sid) {
-        if (adr & 0x20)
-            return osid_read(sid2, adr & 0x1f, now);
-        else
-            return osid.read(sid1, adr & 0x1f, now);
-    } else
-        return osid_read(sid1, adr & 0x1f, now);
-#endif
 }
 
 
@@ -1487,11 +1402,9 @@ void osid_write(osid_t *sid, uint32 adr, uint32 byte, cycle_t now, bool rmw)
 {
     D(bug("sid_write %02x to %04x at cycle %d\n", byte, adr, now));
 
-#ifdef SID_PLAYER
     // Writing to standard SID mirrored registers
     if ((adr & 0x1f) < 0x1d)
         adr &= 0x1f;
-#endif
 
     sid->last_written_byte = sid->regs[adr] = byte;
     int v = adr/7;    // Voice number
@@ -1594,7 +1507,6 @@ void osid_write(osid_t *sid, uint32 adr, uint32 byte, cycle_t now, bool rmw)
             }
             break;
 
-#ifdef SID_PLAYER
         case 29:
             if (byte) {
                 if (byte < 0xfc) {            // Galway noise
@@ -1646,104 +1558,12 @@ void osid_write(osid_t *sid, uint32 adr, uint32 byte, cycle_t now, bool rmw)
                 }
             }
             break;
-#endif
     }
 }
 
 void sid_write(uint32 adr, uint32 byte, cycle_t now, bool rmw)
 {
-#ifdef SID_PLAYER
     SDL_LockAudio();
     osid_write(sid1, adr & 0x7f, byte, now, rmw);
     SDL_UnlockAudio();
-#else
-    SDL_LockAudio();
-
-    if (dual_sid) {
-        if (adr & 0x20)
-            osid_write(sid2, adr & 0x1f, byte, now, rmw);
-        else
-            osid_write(sid1, adr & 0x1f, byte, now, rmw);
-    } else
-        osid_write(sid1, adr & 0x1f, byte, now, rmw);
-
-    SDL_UnlockAudio();
-#endif
 }
-
-
-/*
- *  Read/write snapshot chunk
- */
-
-#ifndef SID_PLAYER
-void osid_chunk_read(osid_t *sid, size_t size)
-{
-    SDL_LockAudio();
-
-    for (int i=0; i<=24; i++)
-        write(i, ChunkReadInt8(), 0, false);
-    sid->last_written_byte = ChunkReadInt8();
-    sid->voice[0].count = ChunkReadInt32();
-    sid->voice[1].count = ChunkReadInt32();
-    sid->voice[2].count = ChunkReadInt32();
-    sid->voice[0].noise = ChunkReadInt32();
-    sid->voice[1].noise = ChunkReadInt32();
-    sid->voice[2].noise = ChunkReadInt32();
-    sid->voice[0].eg_state = ChunkReadInt8();
-    sid->voice[1].eg_state = ChunkReadInt8();
-    sid->voice[2].eg_state = ChunkReadInt8();
-    sid->voice[0].eg_level = ChunkReadInt32();
-    sid->voice[1].eg_level = ChunkReadInt32();
-    sid->voice[2].eg_level = ChunkReadInt32();
-
-    SDL_UnlockAudio();
-}
-
-static void sid1_chunk_read(size_t size)
-{
-    osid_chunk_read(sid1, size);
-}
-
-static void sid2_chunk_read(size_t size)
-{
-    osid_chunk_read(sid2, size);
-}
-
-void osid_chunk_write(osid_t *sid)
-{
-    SDL_LockAudio();
-
-    for (int i=0; i<=24; i++)
-        ChunkWriteInt8(regs[i]);
-    ChunkWriteInt8(sid->last_written_byte);
-    ChunkWriteInt32(sid->voice[0].count);
-    ChunkWriteInt32(sid->voice[1].count);
-    ChunkWriteInt32(sid->voice[2].count);
-    ChunkWriteInt32(sid->voice[0].noise);
-    ChunkWriteInt32(sid->voice[1].noise);
-    ChunkWriteInt32(sid->voice[2].noise);
-    ChunkWriteInt8(sid->voice[0].eg_state);
-    ChunkWriteInt8(sid->voice[1].eg_state);
-    ChunkWriteInt8(sid->voice[2].eg_state);
-    ChunkWriteInt32(sid->voice[0].eg_level);
-    ChunkWriteInt32(sid->voice[1].eg_level);
-    ChunkWriteInt32(sid->voice[2].eg_level);
-
-    SDL_UnlockAudio();
-}
-
-static bool sid1_chunk_write()
-{
-    osid_chunk_write(sid1);
-    return true;
-}
-
-static bool sid2_chunk_write()
-{
-    if (!dual_sid)
-        return false;
-    osid_chunk_write(sid2);
-    return true;
-}
-#endif

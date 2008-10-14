@@ -770,17 +770,8 @@ case 0x60: {// RTS
     break;
 }
 case 0x40: {// RTI
-#ifdef SID_PLAYER
     quit = true;
     break;
-#else
-    read_idle_opcode; next_cycle;
-    read_idle_stack(RSP); next_cycle;
-    pop_flags;
-    uint8 t = pop_byte; next_cycle;
-    jump(t | (pop_byte << 8)); next_cycle;
-    break;
-#endif
 }
 case 0x00: {// BRK
     read_idle_opcode; inc_pc; next_cycle;

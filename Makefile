@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -ggdb $(shell sdl-config --cflags) -DSID_PLAYER
+CFLAGS = -Wall -ggdb $(shell sdl-config --cflags)
 LDFLAGS = $(shell sdl-config --libs)
 
 OBJECTS = cpu.o main.o main_sdl.o mem.o prefs.o prefs_items.o sid.o
