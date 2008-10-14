@@ -43,7 +43,7 @@ extern int number_of_songs, current_song;
  */
 
 // Init everything
-extern void InitAll(int &argc, char **&argv);
+extern void InitAll(int argc, char **argv);
 
 // Exit everything
 extern void ExitAll();
@@ -80,8 +80,8 @@ extern uint32 f_rand_seed;
 
 inline static uint8 f_rand()
 {
-	f_rand_seed = f_rand_seed * 1103515245 + 12345;
-	return f_rand_seed >> 16;
+    f_rand_seed = f_rand_seed * 1103515245 + 12345;
+    return f_rand_seed >> 16;
 }
 
 #endif

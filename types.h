@@ -39,8 +39,10 @@ typedef Uint64 uint64;
 typedef Sint64 int64;
 #endif
 
+typedef enum { false = 0, true = 1 } bool;
+
 // Cycle count
 typedef uint32 cycle_t;
-const cycle_t CYCLE_NEVER = 0xffffffff;	// Infinitely into the future
+#define CYCLE_NEVER ((cycle_t) 0xffffffff);    // Infinitely into the future
 
 #endif

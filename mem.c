@@ -39,8 +39,8 @@ uint8 ram[RAM_SIZE];
 
 void MemoryInit()
 {
-	// Clear memory contents
-	MemoryClear();
+    // Clear memory contents
+    MemoryClear();
 }
 
 
@@ -59,9 +59,9 @@ void MemoryExit()
 
 void MemoryClear()
 {
-	memset(ram, 0, RAM_SIZE - 0x2000);
-	memset(ram + 0xe000, 0x40, 0x2000);		// Fill kernal ROM area with RTI
-	ram[1] = 7;								// 6510 I/O port
-	ram[0x0314] = 0x31;						// IRQ vector
-	ram[0x0315] = 0xea;
+    memset(ram, 0, RAM_SIZE - 0x2000);
+    memset(ram + 0xe000, 0x40, 0x2000);        // Fill kernal ROM area with RTI
+    ram[1] = 7;                                // 6510 I/O port
+    ram[0x0314] = 0x31;                        // IRQ vector
+    ram[0x0315] = 0xea;
 }

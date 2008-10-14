@@ -29,7 +29,7 @@
  */
 
 // Sizes of memory area
-const int RAM_SIZE = 0x10000;
+#define RAM_SIZE ((const int) 0x10000)
 
 // Memory area
 extern uint8 ram[RAM_SIZE];

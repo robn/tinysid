@@ -23,9 +23,6 @@
 
 #include "types.h"
 #include <stdio.h>
-#include <string>
-
-using std::string;
 
 
 /*
@@ -39,21 +36,22 @@ typedef void (*prefs_func_bool)(const char *, bool, bool);
 typedef void (*prefs_func_int32)(const char *, int32, int32);
 
 // Item types
-enum prefs_type {
-	TYPE_STRING,		// char[]
-	TYPE_BOOLEAN,		// bool
-	TYPE_INT32,			// int32
-	TYPE_ANY,			// Wildcard for find_node
-	TYPE_END = TYPE_ANY	// Terminator for prefs_desc list
-};
+typedef enum prefs_type {
+    TYPE_STRING,        // char[]
+    TYPE_BOOLEAN,        // bool
+    TYPE_INT32,            // int32
+    TYPE_ANY,            // Wildcard for find_node
+    TYPE_END = TYPE_ANY    // Terminator for prefs_desc list
+} prefs_type;
 
 // Item descriptor
+typedef struct prefs_desc prefs_desc;
 struct prefs_desc {
-	const char *name;	// Name of keyword
-	prefs_type type;	// Type (see above)
-	bool multiple;		// Can this item occur multiple times (only for TYPE_STRING)?
-	const char *help;	// Help/descriptive text about this item
-	prefs_func func;	// Function called when prefs item changes (PrefsReplace*)
+    const char *name;    // Name of keyword
+    prefs_type type;    // Type (see above)
+    bool multiple;        // Can this item occur multiple times (only for TYPE_STRING)?
+    const char *help;    // Help/descriptive text about this item
+    prefs_func func;    // Function called when prefs item changes (PrefsReplace*)
 };
 
 // List of common preferences items (those which exist on all platforms)
@@ -67,7 +65,7 @@ extern prefs_desc platform_prefs_items[];
  *  Functions
  */
 
-extern void PrefsInit(int &argc, char **&argv);
+extern void PrefsInit(int argc, char **argv);
 extern void PrefsExit();
 
 extern void PrefsPrintUsage();
@@ -79,26 +77,26 @@ extern void AddKeyboardPrefsDefaults();
 // Preferences loading/saving
 extern void LoadPrefs();
 extern void SavePrefs();
-extern void LoadPrefs(const string &path, bool create = true);
-extern void SavePrefs(const string &path);
+extern void LoadPrefs(const char *path, bool create);
+extern void SavePrefs(const char *path);
 
 // Public preferences access functions
 extern void PrefsAddString(const char *name, const char *s);
 extern void PrefsAddBool(const char *name, bool b);
 extern void PrefsAddInt32(const char *name, int32 val);
 
-extern void PrefsReplaceString(const char *name, const char *s, int index = 0);
+extern void PrefsReplaceString(const char *name, const char *s, int index);
 extern void PrefsReplaceBool(const char *name, bool b);
 extern void PrefsReplaceInt32(const char *name, int32 val);
 
-extern const char *PrefsFindString(const char *name, int index = 0);
+extern const char *PrefsFindString(const char *name, int index);
 extern bool PrefsFindBool(const char *name);
 extern int32 PrefsFindInt32(const char *name);
 
-extern void PrefsRemoveItem(const char *name, int index = 0);
+extern void PrefsRemoveItem(const char *name, int index);
 
-extern void PrefsSetCallback(const char *name, prefs_func_string f);
-extern void PrefsSetCallback(const char *name, prefs_func_bool f);
-extern void PrefsSetCallback(const char *name, prefs_func_int32 f);
+extern void PrefsSetCallbackString(const char *name, prefs_func_string f);
+extern void PrefsSetCallbackBool(const char *name, prefs_func_bool f);
+extern void PrefsSetCallbackInt32(const char *name, prefs_func_int32 f);
 
 #endif

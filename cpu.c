@@ -31,7 +31,7 @@
 typedef uint32 (*mem_read_func)(uint32, cycle_t);
 typedef void (*mem_write_func)(uint32, uint32, cycle_t, bool);
 
-static mem_read_func mem_read_table[256];		// Table of read/write functions for 256 pages
+static mem_read_func mem_read_table[256];       // Table of read/write functions for 256 pages
 static mem_write_func mem_write_table[256];
 
 
@@ -47,18 +47,19 @@ static void cia_write(uint32 adr, uint32 byte, cycle_t now, bool rmw);
 
 static void set_memory_funcs(uint16 from, uint16 to, mem_read_func r, mem_write_func w)
 {
-	for (int page = (from >> 8); page <= (to >> 8); page++) {
-		mem_read_table[page] = r;
-		mem_write_table[page] = w;
-	}
+        int page;
+    for (page = (from >> 8); page <= (to >> 8); page++) {
+        mem_read_table[page] = r;
+        mem_write_table[page] = w;
+    }
 }
 
 void CPUInit()
 {
-	// Set up memory access tables
-	set_memory_funcs(0x0000, 0xffff, ram_read, ram_write);
-	set_memory_funcs(0xd400, 0xd7ff, sid_read, sid_write);
-	set_memory_funcs(0xdc00, 0xdcff, ram_read, cia_write);
+    // Set up memory access tables
+    set_memory_funcs(0x0000, 0xffff, ram_read, ram_write);
+    set_memory_funcs(0xd400, 0xd7ff, sid_read, sid_write);
+    set_memory_funcs(0xdc00, 0xdcff, ram_read, cia_write);
 }
 
 
@@ -77,22 +78,22 @@ void CPUExit()
 
 static uint32 ram_read(uint32 adr, cycle_t now)
 {
-	return ram[adr];
+    return ram[adr];
 }
 
 static void ram_write(uint32 adr, uint32 byte, cycle_t now, bool rmw)
 {
-	ram[adr] = byte;
+    ram[adr] = byte;
 }
 
 static void cia_write(uint32 adr, uint32 byte, cycle_t now, bool rmw)
 {
-	if (adr == 0xdc04)
-		cia_tl_write(byte);
-	else if (adr == 0xdc05)
-		cia_th_write(byte);
-	else
-		ram[adr] = byte;
+    if (adr == 0xdc04)
+        cia_tl_write(byte);
+    else if (adr == 0xdc05)
+        cia_th_write(byte);
+    else
+        ram[adr] = byte;
 }
 
 
@@ -102,22 +103,22 @@ static void cia_write(uint32 adr, uint32 byte, cycle_t now, bool rmw)
 
 void CPUExecute(uint16 startadr, uint8 init_ra, uint8 init_rx, uint8 init_ry, cycle_t max_cycles)
 {
-	// 6510 registers
-	register uint8 a = init_ra, x = init_rx, y = init_ry;
-	register uint8 n_flag = 0, z_flag = 0;
-	uint8 sp = 0xff, pflags = 0;
+    // 6510 registers
+    register uint8 a = init_ra, x = init_rx, y = init_ry;
+    register uint8 n_flag = 0, z_flag = 0;
+    uint8 sp = 0xff, pflags = 0;
 
-	// Program counter
-	register uint8 *pc;
+    // Program counter
+    register uint8 *pc;
 
-	// Temporary address storage
-	uint16 adr;
+    // Temporary address storage
+    uint16 adr;
 
-	// Phi 2 cycle counter
-	register cycle_t current_cycle = 0;
+    // Phi 2 cycle counter
+    register cycle_t current_cycle = 0;
 
-	// Flag: last branch instruction delays IRQ/NMI by 1 cycle (unused)
-	bool branch_delays_int = false;
+    // Flag: last branch instruction delays IRQ/NMI by 1 cycle (unused)
+    bool branch_delays_int = false;
 
 #define RA a
 #define RX x
@@ -130,61 +131,61 @@ void CPUExecute(uint16 startadr, uint8 init_ra, uint8 init_rx, uint8 init_ry, cy
 #define ADR adr
 
 #define read_byte(adr) \
-	mem_read_table[(adr) >> 8](adr, current_cycle)
+    mem_read_table[(adr) >> 8](adr, current_cycle)
 #define read_zp(adr) \
-	ram[adr]
+    ram[adr]
 
 #define write_byte(adr, byte) \
-	mem_write_table[(adr) >> 8](adr, byte, current_cycle, false)
+    mem_write_table[(adr) >> 8](adr, byte, current_cycle, false)
 #define write_byte_rmw(adr, byte) \
-	mem_write_table[(adr) >> 8](adr, byte, current_cycle, true)
+    mem_write_table[(adr) >> 8](adr, byte, current_cycle, true)
 #define write_zp(adr, byte) \
-	ram[adr] = (byte)
+    ram[adr] = (byte)
 
 #define read_idle(adr)
 #define read_idle_zp(adr)
 #define read_idle_stack(sp)
 
 #define read_opcode \
-	(*pc)
+    (*pc)
 #define read_idle_opcode
 
 #define push_byte(byte) \
 { \
-	if (sp == 0) \
-		quit = true; \
-	(ram + 0x100)[sp--] = (byte); \
+    if (sp == 0) \
+        quit = true; \
+    (ram + 0x100)[sp--] = (byte); \
 }
 #define pop_byte \
-	(sp == 0xff ? (quit = true, 0) : (ram + 0x100)[++sp])
+    (sp == 0xff ? (quit = true, 0) : (ram + 0x100)[++sp])
 
 #define jump(adr) \
-	pc = ram + (adr)
+    pc = ram + (adr)
 #define inc_pc \
-	pc++
+    pc++
 
 #define next_cycle \
-	current_cycle++
+    current_cycle++
 
 #include "cpu_macros.h"
 
-	// Jump to specified start address
-	jump(startadr);
+    // Jump to specified start address
+    jump(startadr);
 
-	// Main loop: execute opcodes until stack under-/overflow, RTI, illegal opcode, or max_cycles reached
-	bool quit = false;
-	while (current_cycle < max_cycles && !quit) {
+    // Main loop: execute opcodes until stack under-/overflow, RTI, illegal opcode, or max_cycles reached
+    bool quit = false;
+    while (current_cycle < max_cycles && !quit) {
 
-		// Fetch opcode
-		uint8 opcode = read_opcode; inc_pc; next_cycle;
+        // Fetch opcode
+        uint8 opcode = read_opcode; inc_pc; next_cycle;
 
-		// Execute opcode
-		switch (opcode) {
+        // Execute opcode
+        switch (opcode) {
 #include "cpu_opcodes.h"
-			case 0xf2:
-			default:
-illegal_op:		quit = true;
-				break;
-		}
-	}
+            case 0xf2:
+            default:
+illegal_op:        quit = true;
+                break;
+        }
+    }
 }

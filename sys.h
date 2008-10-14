@@ -36,14 +36,14 @@
 
 // Dummy SDL definitions for SIDPlayer
 typedef struct {
-	int freq;			// DSP frequency -- samples per second
-	uint16 format;		// Audio data format
-	uint8 channels;		// Number of channels: 1 mono, 2 stereo
-	uint8 silence;		// Audio buffer silence value (calculated)
-	uint16 samples;		// Audio buffer size in samples
-	uint32 size;		// Audio buffer size in bytes (calculated)
-	void (*callback)(void *userdata, uint8 *stream, int len);
-	void  *userdata;
+    int freq;            // DSP frequency -- samples per second
+    uint16 format;        // Audio data format
+    uint8 channels;        // Number of channels: 1 mono, 2 stereo
+    uint8 silence;        // Audio buffer silence value (calculated)
+    uint16 samples;        // Audio buffer size in samples
+    uint32 size;        // Audio buffer size in bytes (calculated)
+    void (*callback)(void *userdata, uint8 *stream, int len);
+    void  *userdata;
 } SDL_AudioSpec;
 
 #define AUDIO_U8 0x0008
