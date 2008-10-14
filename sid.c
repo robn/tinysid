@@ -990,7 +990,7 @@ void SIDClockFreqChanged()
 #ifdef USE_FIXPOINT_MATHS
     sid_cycles_frac = int32(float(cycles_per_second) * 65536.0 / obtained.freq);
 #else
-    sid_cycles_frac = cycles_per_second / obtained.freq;
+    sid_cycles_frac = ((float) cycles_per_second) / obtained.freq;
 #endif
 
     // Compute envelope table
@@ -1235,13 +1235,13 @@ static void calc_sid(osid_t *sid, int32 *sum_output_left, int32 *sum_output_righ
         int32 yn = xn+sid->d1.imul(xn1)+sid->d2.imul(xn2)-sid->g1.imul(yn1)-sid->g2.imul(yn2);
         sum_output_filter = yn;
 #endif
-        float xn = sum_output_filter_left * sid->f_ampl;
+        float xn = ((float) sum_output_filter_left) * sid->f_ampl;
         float yn = xn + sid->d1 * sid->xn1_l + sid->d2 * sid->xn2_l - sid->g1 * sid->yn1_l - sid->g2 * sid->yn2_l;
-        sum_output_filter_left = yn;
+        sum_output_filter_left = (int32) yn;
         sid->yn2_l = sid->yn1_l; sid->yn1_l = yn; sid->xn2_l = sid->xn1_l; sid->xn1_l = xn;
-        xn = sum_output_filter_right * sid->f_ampl;
+        xn = ((float) sum_output_filter_right) * sid->f_ampl;
         yn = xn + sid->d1 * sid->xn1_r + sid->d2 * sid->xn2_r - sid->g1 * sid->yn1_r - sid->g2 * sid->yn2_r;
-        sum_output_filter_right = yn;
+        sum_output_filter_right = (int32) yn;
         sid->yn2_r = sid->yn1_r; sid->yn1_r = yn; sid->xn2_r = sid->xn1_r; sid->xn1_r = xn;
     }
 
@@ -1360,7 +1360,7 @@ void SIDExecute()
     if (replay_start_time == 0)
         replay_start_time = now;
     uint32 replay_time = now - replay_start_time;
-    uint32 adj_nominal_replay_time = (cia_timer + 1) * 100000000.0 / (cycles_per_second * speed_adjust);
+    uint32 adj_nominal_replay_time = (uint32) ((cia_timer + 1) * 100000000.0 / (cycles_per_second * speed_adjust));
     int32 delay = adj_nominal_replay_time - replay_time - over_time;
     over_time = -delay;
     if (over_time < 0)
@@ -1405,7 +1405,7 @@ void osid_calc_filter(osid_t *sid)
         fr = ffreq_hp[sid->f_freq];
 
     // Limit to <1/2 sample frequency, avoid div by 0 in case FILT_NOTCH below
-    filt_t arg = fr / (obtained.freq >> 1);
+    filt_t arg = fr / ((float) (obtained.freq >> 1));
     if (arg > 0.99)
         arg = 0.99;
     if (arg < 0.01)
@@ -1414,7 +1414,7 @@ void osid_calc_filter(osid_t *sid)
     // Calculate poles (resonance frequency and resonance)
     // The (complex) poles are at
     //   zp_1/2 = (-g1 +/- sqrt(g1^2 - 4*g2)) / 2
-    sid->g2 = 0.55 + 1.2 * arg * arg - 1.2 * arg + sid->f_res * 0.0133333333;
+    sid->g2 = 0.55 + 1.2 * arg * arg - 1.2 * arg + ((float) sid->f_res) * 0.0133333333;
     sid->g1 = -2.0 * sqrt(sid->g2) * cos(M_PI * arg);
 
     // Increase resonance if LP/HP combined with BP
@@ -1590,7 +1590,7 @@ void osid_write(osid_t *sid, uint32 adr, uint32 byte, cycle_t now, bool rmw)
 #ifdef USE_FIXPOINT_MATHS
 //!!            voice[v].add = sid_cycles_frac.imul((int)voice[v].freq);
 #else
-            sid->voice[v].add = sid->voice[v].freq * sid_cycles_frac;
+            sid->voice[v].add = (uint32) ((float) sid->voice[v].freq) * sid_cycles_frac;
 #endif
             break;
 
@@ -1601,7 +1601,7 @@ void osid_write(osid_t *sid, uint32 adr, uint32 byte, cycle_t now, bool rmw)
 #ifdef USE_FIXPOINT_MATHS
 //!!            voice[v].add = sid_cycles_frac.imul((int)voice[v].freq);
 #else
-            sid->voice[v].add = sid->voice[v].freq * sid_cycles_frac;
+            sid->voice[v].add = (uint32) ((float) sid->voice[v].freq) * sid_cycles_frac;
 #endif
             break;
 
