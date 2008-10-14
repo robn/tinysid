@@ -117,9 +117,6 @@ void CPUExecute(uint16 startadr, uint8 init_ra, uint8 init_rx, uint8 init_ry, cy
     // Phi 2 cycle counter
     register cycle_t current_cycle = 0;
 
-    // Flag: last branch instruction delays IRQ/NMI by 1 cycle (unused)
-    bool branch_delays_int = false;
-
 #define RA a
 #define RX x
 #define RY y

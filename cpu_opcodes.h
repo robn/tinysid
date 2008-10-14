@@ -750,7 +750,7 @@ case 0x4c:    // JMP abs
 case 0x6c: {// JMP (ind)
     read_adr_abs;
     uint8 t = read_byte(ADR); next_cycle;
-    jump(t | (read_byte((ADR + 1) & 0xff | ADR & 0xff00) << 8)); next_cycle;
+    jump(t | (read_byte(((ADR + 1) & 0xff) | (ADR & 0xff00)) << 8)); next_cycle;
     break;
 }
 case 0x20: {// JSR abs
@@ -1189,7 +1189,7 @@ case 0x6b: {// ARR #imm
         Z_FLAG = RA;
         ((t ^ RA) & 0x40) ? (PFLAGS |= PFLAG_V) : (PFLAGS &= ~PFLAG_V);
         if ((t & 0x0f) + (t & 0x01) > 5)
-            RA = RA & 0xf0 | (RA + 6) & 0x0f;
+            RA = (RA & 0xf0) | ((RA + 6) & 0x0f);
         (((t + (t & 0x10)) & 0x1f0) > 0x50) ? (PFLAGS |= PFLAG_C, RA += 0x60) : (PFLAGS &= ~PFLAG_C);
     } else {
         set_nz(RA);
