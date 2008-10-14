@@ -25,9 +25,7 @@
 #include "config.h"
 #endif
 
-#if defined(__BEOS__)
-#include <support/SupportDefs.h>
-#elif defined(SDL)
+#ifdef SDL
 #include <SDL_types.h>
 typedef Uint8 uint8;
 typedef Sint8 int8;

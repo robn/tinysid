@@ -23,10 +23,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined(__BEOS__)
-#include <support/UTF8.h>
-#endif
-
 #include "main.h"
 #include "prefs.h"
 #include "mem.h"
@@ -165,24 +161,12 @@ bool LoadPSIDFile(const char *file)
 
     speed_flags = read_psid_32(header, PSID_SPEED);
 
-#if defined(__BEOS__)
-    int32 sl = 32, dl = 64, state = 0;
-    convert_to_utf8(B_ISO1_CONVERSION, (char *)(header + PSID_NAME), &sl, module_name, &dl, &state);
-    sl = 32, dl = 64, state = 0;
-    convert_to_utf8(B_ISO1_CONVERSION, (char *)(header + PSID_AUTHOR), &sl, author_name, &dl, &state);
-    sl = 32, dl = 64, state = 0;
-    convert_to_utf8(B_ISO1_CONVERSION, (char *)(header + PSID_COPYRIGHT), &sl, copyright_info, &dl, &state);
-    module_name[63] = 0;
-    author_name[63] = 0;
-    copyright_info[63] = 0;
-#else
     strncpy(module_name, (char *)(header + PSID_NAME), 32);
     strncpy(author_name, (char *)(header + PSID_AUTHOR), 32);
     strncpy(copyright_info, (char *)(header + PSID_COPYRIGHT), 32);
     module_name[32] = 0;
     author_name[32] = 0;
     copyright_info[32] = 0;
-#endif
 
     // Seek to start of module data
     fseek(f, read_psid_16(header, PSID_LENGTH), SEEK_SET);
