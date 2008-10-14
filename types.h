@@ -21,10 +21,6 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifdef SDL
 #include <SDL_types.h>
 typedef Uint8 uint8;

@@ -21,10 +21,6 @@
 #ifndef SYS_H
 #define SYS_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "types.h"
 
 
