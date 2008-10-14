@@ -176,74 +176,13 @@ int main(int argc, char **argv)
     printf("Copyright  : %s\n\n", copyright_info);
     printf("Playing song %d/%d\n", current_song + 1, number_of_songs);
 
-    // Replay or output to file?
-    const char *outfile = PrefsFindString("outfile", 0);
-    if (outfile) {
-
-        // Open file
-        SDL_RWops *f = SDL_RWFromFile(outfile, "wb");
-        if (f == NULL) {
-            fprintf(stderr, "Can't open '%s' for writing (%s)\n", outfile, strerror(errno));
-            exit(1);
-        }
-
-        // Get format information
-        int32 channels = (PrefsFindBool("stereo") ? 2 : 1);
-        int32 bits = (PrefsFindBool("audio16bit") ? 16 : 8);
-        int32 rate = PrefsFindInt32("samplerate");
-        int32 time = PrefsFindInt32("time");
-        int32 bytes_per_frame = channels * (bits / 8);
-        int32 bytes_per_second = rate * bytes_per_frame;
-        int32 data_length = time * bytes_per_second;
-
-        // Write header
-        SDL_WriteLE32(f, 0x46464952); // "RIFF"
-        SDL_WriteLE32(f, 36 + data_length);
-        SDL_WriteLE32(f, 0x45564157); // "WAVE"
-        SDL_WriteLE32(f, 0x20746D66); // "fmt "
-        SDL_WriteLE32(f, 16);
-        SDL_WriteLE16(f, 1);
-        SDL_WriteLE16(f, channels);
-        SDL_WriteLE32(f, rate);
-        SDL_WriteLE32(f, bytes_per_second);
-        SDL_WriteLE16(f, bytes_per_frame);
-        SDL_WriteLE16(f, bits);
-        SDL_WriteLE32(f, 0x61746164); // "data"
-        SDL_WriteLE32(f, data_length);
-
-        // Calculate sound and write to file
-        uint8 *buf = malloc(sizeof(uint8) * bytes_per_second);
-                int i;
-        for (i=0; i<time; i++) {
-            SIDCalcBuffer(buf, bytes_per_second);
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-            if (bits > 8) {
-                // WAV file is little-endian, swap audio data
-                for (int b=0; b<bytes_per_second; b+=2) {
-                    uint8 tmp = buf[b];
-                    buf[b] = buf[b+1];
-                    buf[b+1] = tmp;
-                }
-            }
-#endif
-            SDL_RWwrite(f, buf, bytes_per_second, 1);
-        }
-                free(buf);
-
-        // Close file
-        SDL_RWclose(f);
-        printf("Output written to '%s'\n", outfile);
-
-    } else {
-
-        // Start replay and enter main loop
-        SDL_PauseAudio(false);
-        while (true) {
-            SDL_Event e;
-            if (SDL_WaitEvent(&e)) {
-                if (e.type == SDL_QUIT)
-                    break;
-            }
+    // Start replay and enter main loop
+    SDL_PauseAudio(false);
+    while (true) {
+        SDL_Event e;
+        if (SDL_WaitEvent(&e)) {
+            if (e.type == SDL_QUIT)
+                break;
         }
     }
 

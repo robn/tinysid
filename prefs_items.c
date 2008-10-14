@@ -45,8 +45,6 @@ prefs_desc common_prefs_items[] = {
     {"v4pan", TYPE_INT32, false,        "panning sampled voice (-256..256 = left..right)"},
     {"dualsep", TYPE_INT32, false,      "dual SID stereo separation (0..256 = 0..100%)"},
     {"speed", TYPE_INT32, false,        "replay speed adjustment (percent)"},
-    {"outfile", TYPE_STRING, false,     "write output to WAV file"},
-    {"time", TYPE_INT32, false,         "playing time in second when writing to file"},
     {NULL, TYPE_END, false}    // End of list
 };
 

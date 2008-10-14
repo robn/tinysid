@@ -776,11 +776,9 @@ void SIDInit()
     desired.callback = calc_buffer;
     desired.userdata = NULL;
 #ifdef SID_PLAYER
-    if (PrefsFindString("outfile", 0) == NULL) {
-        if (SDL_OpenAudio(&desired, &obtained) < 0) {
-            fprintf(stderr, "Couldn't initialize audio (%s)\n", SDL_GetError());
-            exit(1);
-        }
+    if (SDL_OpenAudio(&desired, &obtained) < 0) {
+        fprintf(stderr, "Couldn't initialize audio (%s)\n", SDL_GetError());
+        exit(1);
     }
 #endif
 
