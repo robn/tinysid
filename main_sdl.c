@@ -234,19 +234,6 @@ int main(int argc, char **argv)
         SDL_RWclose(f);
         printf("Output written to '%s'\n", outfile);
 
-    } else if (PrefsFindBool("cwsid")) {
-
-        // Catweasel output, requires manual timing
-        while (true) {
-            SIDExecute();
-
-            SDL_Event e;
-            if (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT)
-                    break;
-            }
-        }
-
     } else {
 
         // Start replay and enter main loop

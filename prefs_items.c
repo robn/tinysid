@@ -44,8 +44,6 @@ prefs_desc common_prefs_items[] = {
     {"v3pan", TYPE_INT32, false,        "panning voice 3 (-256..256 = left..right)"},
     {"v4pan", TYPE_INT32, false,        "panning sampled voice (-256..256 = left..right)"},
     {"dualsep", TYPE_INT32, false,      "dual SID stereo separation (0..256 = 0..100%)"},
-    {"cwsid", TYPE_BOOLEAN, false,        "output to Catweasel SID"},
-    {"siddev", TYPE_STRING, false,        "Catweasel device name"},
     {"speed", TYPE_INT32, false,        "replay speed adjustment (percent)"},
     {"outfile", TYPE_STRING, false,     "write output to WAV file"},
     {"time", TYPE_INT32, false,         "playing time in second when writing to file"},
@@ -79,7 +77,5 @@ void AddPrefsDefaults()
     PrefsAddInt32("v4volume", 0x100);
     PrefsAddInt32("v4pan", 0);
     PrefsAddInt32("dualsep", 0x80);
-    PrefsAddBool("cwsid", false);
-    PrefsAddString("siddev", "/dev/sid");
     PrefsAddInt32("speed", 100);
 }

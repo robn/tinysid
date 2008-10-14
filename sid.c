@@ -29,23 +29,6 @@
 #include <string.h>
 #include <math.h>
 
-#ifdef __linux__
-// Catweasel ioctls (included here for convenience)
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/ioctl.h>
-#define CWSID_IOCTL_TYPE ('S')
-#define CWSID_IOCTL_RESET        _IO(CWSID_IOCTL_TYPE, 0)
-#define CWSID_IOCTL_CARDTYPE     _IOR(CWSID_IOCTL_TYPE, 4, int)
-#define CWSID_IOCTL_PAL          _IO(CWSID_IOCTL_TYPE, 0x11)
-#define CWSID_IOCTL_NTSC         _IO(CWSID_IOCTL_TYPE, 0x12)
-#define CWSID_IOCTL_DOUBLEBUFFER _IOW(CWSID_IOCTL_TYPE, 0x21, int)
-#define CWSID_IOCTL_DELAY        _IOW(CWSID_IOCTL_TYPE, 0x22, int)
-#define CWSID_MAGIC 0x100
-#define HAVE_CWSID 1
-#endif
-
 #include "sid.h"
 #include "main.h"
 #include "prefs.h"
@@ -124,9 +107,6 @@ static int speed_adjust;        // Speed adjustment in percent
 // Clock frequency changed
 void SIDClockFreqChanged();
 #endif
-
-// Catweasel device file handle
-static int cwsid_fh = -1;
 
 // Resonance frequency polynomials
 static inline float CALC_RESONANCE_LP(float f)
@@ -708,22 +688,12 @@ static void prefs_dualsep_changed(const char *name, int32 from, int32 to)
 #ifdef SID_PLAYER
 static void set_cycles_per_second(const char *to)
 {
-    if (strncmp(to, "6569", 4) == 0) {
+    if (strncmp(to, "6569", 4) == 0)
         cycles_per_second = PAL_CLOCK;
-#ifdef HAVE_CWSID
-        ioctl(cwsid_fh, CWSID_IOCTL_PAL);
-#endif
-    } else if (strcmp(to, "6567R5") == 0) {
+    else if (strcmp(to, "6567R5") == 0)
         cycles_per_second = NTSC_OLD_CLOCK;
-#ifdef HAVE_CWSID
-        ioctl(cwsid_fh, CWSID_IOCTL_NTSC);
-#endif
-    } else {
+    else
         cycles_per_second = NTSC_CLOCK;
-#ifdef HAVE_CWSID
-        ioctl(cwsid_fh, CWSID_IOCTL_NTSC);
-#endif
-    }
 }
 
 static void prefs_victype_changed(const char *name, const char *from, const char *to)
@@ -748,28 +718,6 @@ void SIDInit()
     sid2 = malloc(sizeof(osid_t));
     osid_init(sid1, 0);
     osid_init(sid2, 1);
-
-    // Use Catweasel?
-#ifdef HAVE_CWSID
-    if (PrefsFindBool("cwsid")) {
-        cwsid_fh = open(PrefsFindString("siddev", 0), O_WRONLY);
-        if (cwsid_fh >= 0) {
-            int i;
-            if (ioctl(cwsid_fh, CWSID_IOCTL_CARDTYPE, &i) < 0 || i != CWSID_MAGIC) {
-                close(cwsid_fh);
-                cwsid_fh = -1;
-            } else {
-                ioctl(cwsid_fh, CWSID_IOCTL_RESET);
-                ioctl(cwsid_fh, CWSID_IOCTL_DOUBLEBUFFER, 0);
-            }
-        }
-    }
-    if (cwsid_fh < 0)
-        PrefsReplaceBool("cwsid", false);
-#else
-    PrefsReplaceBool("cwsid", false);
-    cwsid_fh = -1;
-#endif
 
     // Read preferences ("obtained" is set to have valid values in it if SDL_OpenAudio() fails)
     emulate_8580 = (strncmp(PrefsFindString("sidtype", 0), "8580", 4) == 0);
@@ -828,15 +776,12 @@ void SIDInit()
     desired.callback = calc_buffer;
     desired.userdata = NULL;
 #ifdef SID_PLAYER
-    if (PrefsFindString("outfile", 0) == NULL && cwsid_fh < 0) {
+    if (PrefsFindString("outfile", 0) == NULL) {
         if (SDL_OpenAudio(&desired, &obtained) < 0) {
             fprintf(stderr, "Couldn't initialize audio (%s)\n", SDL_GetError());
             exit(1);
         }
     }
-#else
-    if (cwsid_fh < 0)
-        SDL_OpenAudio(&desired, &obtained);
 #endif
 
     // Convert reverb delay to sample frame count
@@ -884,13 +829,6 @@ void SIDInit()
 
 void SIDExit()
 {
-#ifdef HAVE_CWSID
-    if (cwsid_fh >= 0) {
-        ioctl(cwsid_fh, CWSID_IOCTL_RESET);
-        close(cwsid_fh);
-        cwsid_fh = -1;
-    }
-#endif
     SDL_CloseAudio();
 
     if (sid1) free(sid1);
@@ -912,14 +850,6 @@ void osid_reset(osid_t *sid)
     sid->regs[24] = 0x0f;
 #else
     sid->volume = 0;
-#endif
-
-#ifdef HAVE_CWSID
-    if (cwsid_fh >= 0 && sid->sid_num == 0) {
-        ioctl(cwsid_fh, CWSID_IOCTL_RESET);
-        lseek(cwsid_fh, 24, SEEK_SET);
-        write(cwsid_fh, sid->regs + 24, 1);
-    }
 #endif
 
     int v;
@@ -1285,11 +1215,6 @@ static void calc_buffer(void *userdata, uint8 *buf, int count)
         }
 #endif
 
-#ifdef HAVE_CWSID
-        if (cwsid_fh >= 0)
-            continue;
-#endif
-
         // Calculate output of voices from both SIDs
         calc_sid(sid1, &sum_output_left, &sum_output_right);
         if (dual_sid)
@@ -1572,15 +1497,6 @@ void osid_write(osid_t *sid, uint32 adr, uint32 byte, cycle_t now, bool rmw)
 
     sid->last_written_byte = sid->regs[adr] = byte;
     int v = adr/7;    // Voice number
-
-#ifdef HAVE_CWSID
-    if (cwsid_fh >= 0 && sid->sid_num == 0 && adr < 0x1a) {
-        lseek(cwsid_fh, adr, SEEK_SET);
-        write(cwsid_fh, sid->regs + adr, 1);
-        lseek(cwsid_fh, adr, SEEK_SET);
-        write(cwsid_fh, sid->regs + adr, 1);
-    }
-#endif
 
     switch (adr) {
         case 0:
