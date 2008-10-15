@@ -38,19 +38,10 @@
 #include "fixedpointmath.h"
 
 
-#undef USE_FIXPOINT_MATHS
-
-
 // Filter math definitions
-#ifdef USE_FIXPOINT_MATHS
-typedef int32 filt_t;
-const int32 F_ONE = 0x10000;
-const int32 F_ZERO = 0;
-#else
 typedef float filt_t;
 const float F_ONE = 1.0;
 const float F_ZERO = 0.0;
-#endif
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -758,13 +749,8 @@ void SIDInit()
 
     // Compute filter tables
     for (i=0; i<256; i++) {
-#ifdef USE_FIXPOINT_MATHS
-        ffreq_lp[i] = int32(CALC_RESONANCE_LP(i) * 65536.0);
-        ffreq_hp[i] = int32(CALC_RESONANCE_HP(i) * 65536.0);
-#else
         ffreq_lp[i] = CALC_RESONANCE_LP(i);
         ffreq_hp[i] = CALC_RESONANCE_HP(i);
-#endif
     }
 
     // Compute galway noise table
@@ -862,11 +848,7 @@ void SIDClockFreqChanged()
 {
     // Compute number of cycles per sample frame
     sid_cycles = cycles_per_second / obtained.freq;
-#ifdef USE_FIXPOINT_MATHS
-    sid_cycles_frac = int32(float(cycles_per_second) * 65536.0 / obtained.freq);
-#else
     sid_cycles_frac = ((float) cycles_per_second) / obtained.freq;
-#endif
 
     // Compute envelope table
     static const uint32 div[16] = {
@@ -1097,11 +1079,6 @@ static void calc_sid(osid_t *sid, int32 *sum_output_left, int32 *sum_output_righ
 
     // Filter
     if (enable_filters) {
-#ifdef USE_FIXPOINT_MATHS    //!!
-        int32 xn = sid->f_ampl.imul(sum_output_filter);
-        int32 yn = xn+sid->d1.imul(xn1)+sid->d2.imul(xn2)-sid->g1.imul(yn1)-sid->g2.imul(yn2);
-        sum_output_filter = yn;
-#endif
         float xn = ((float) sum_output_filter_left) * sid->f_ampl;
         float yn = xn + sid->d1 * sid->xn1_l + sid->d2 * sid->xn2_l - sid->g1 * sid->yn1_l - sid->g2 * sid->yn2_l;
         sum_output_filter_left = (int32) yn;
@@ -1416,22 +1393,14 @@ void osid_write(osid_t *sid, uint32 adr, uint32 byte, cycle_t now, bool rmw)
         case 7:
         case 14:
             sid->voice[v].freq = (sid->voice[v].freq & 0xff00) | byte;
-#ifdef USE_FIXPOINT_MATHS
-//!!            voice[v].add = sid_cycles_frac.imul((int)voice[v].freq);
-#else
             sid->voice[v].add = (uint32) ((float) sid->voice[v].freq) * sid_cycles_frac;
-#endif
             break;
 
         case 1:
         case 8:
         case 15:
             sid->voice[v].freq = (sid->voice[v].freq & 0xff) | (byte << 8);
-#ifdef USE_FIXPOINT_MATHS
-//!!            voice[v].add = sid_cycles_frac.imul((int)voice[v].freq);
-#else
             sid->voice[v].add = (uint32) ((float) sid->voice[v].freq) * sid_cycles_frac;
-#endif
             break;
 
         case 2:
