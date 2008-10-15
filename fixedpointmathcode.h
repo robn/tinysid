@@ -200,10 +200,12 @@ typedef uint32_t ufp8p24_t;
 
 /* temporary variables */
 
-static ufp8p8_t   _ufp8p8tmp,   _ufp8p8tmp2,    _ufp8p8tmp3;
-static ufp24p8_t  _ufp24p8tmp,  _ufp24p8tmp2,   _ufp24p8tmp3;
-static ufp16p16_t _ufp16p16tmp, _ufp16p16tmp2,  _ufp16p16tmp3;
-static ufp8p24_t  _ufp8p24tmp,  _ufp8p24tmp2,   _ufp8p24tmp3;
+#define unused __attribute__((unused))
+static ufp8p8_t   _ufp8p8tmp unused,   _ufp8p8tmp2 unused,    _ufp8p8tmp3 unused;
+static ufp24p8_t  _ufp24p8tmp unused,  _ufp24p8tmp2 unused,   _ufp24p8tmp3 unused;
+static ufp16p16_t _ufp16p16tmp unused, _ufp16p16tmp2 unused,  _ufp16p16tmp3 unused;
+static ufp8p24_t  _ufp8p24tmp unused,  _ufp8p24tmp2 unused,   _ufp8p24tmp3 unused;
+#undef unused
 
 #define _mid(a,b)           (a+((b-a)>>1))
 
@@ -338,10 +340,12 @@ static ufp8p24_t  _ufp8p24tmp,  _ufp8p24tmp2,   _ufp8p24tmp3;
 
 /* temporary variables */
 
-static uint32_t _fp32_x2,  _fp32_x3,  _fp32_x4,  _fp32_x5,  _fp32_x6;
-static uint64_t _fp64_x2,  _fp64_x3,  _fp64_x4,  _fp64_x5,  _fp64_x6,
-                _fp64_x7,  _fp64_x8,  _fp64_x9,  _fp64_x10, _fp64_x11,
-                _fp64_x12, _fp64_x13, _fp64_x14, _fp64_x15, _fp64_x16;
+#define unused __attribute__((unused))
+static uint32_t _fp32_x2 unused,  _fp32_x3 unused,  _fp32_x4 unused,  _fp32_x5 unused,  _fp32_x6 unused;
+static uint64_t _fp64_x2 unused,  _fp64_x3 unused,  _fp64_x4 unused,  _fp64_x5 unused,  _fp64_x6 unused,
+                _fp64_x7 unused,  _fp64_x8 unused,  _fp64_x9 unused,  _fp64_x10 unused, _fp64_x11 unused,
+                _fp64_x12 unused, _fp64_x13 unused, _fp64_x14 unused, _fp64_x15 unused, _fp64_x16 unused;
+#undef unused
 
 /* I cheat a little here by passing overflowed ufp8p8's to mul and div,
  * but they get cast to uint32_t anyway, so this gives a bit more precission.
