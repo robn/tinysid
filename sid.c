@@ -39,13 +39,10 @@
 
 
 // Filter math definitions
-typedef float filt_t;
-const float F_ONE = 1.0;
-const float F_ZERO = 0.0;
+const fp16p16_t F_ONE = itofp16p16(1);
+const fp16p16_t F_ZERO = itofp16p16(0);
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#define F_PI dtofp16p16(3.14159265358979323846)
 
 // Desired and obtained audio formats
 static SDL_AudioSpec desired, obtained;
@@ -74,13 +71,13 @@ static int32 dual_sep;
 
 // Number of SID clocks per sample frame
 static uint32 sid_cycles;        // Integer
-static filt_t sid_cycles_frac;    // With fractional part
+static fp16p16_t sid_cycles_frac;    // With fractional part
 
 // Phi2 clock frequency
 static cycle_t cycles_per_second;
-const float PAL_CLOCK = 985248.444;
-const float NTSC_OLD_CLOCK = 1000000.0;
-const float NTSC_CLOCK = 1022727.143;
+const fp16p16_t PAL_CLOCK = ftofp16p16(985248.444);
+const fp16p16_t NTSC_OLD_CLOCK = ftofp16p16(1000000.0);
+const fp16p16_t NTSC_CLOCK = ftofp16p16(1022727.143);
 
 // Replay counter variables
 static uint16 cia_timer;        // CIA timer A latch
@@ -91,14 +88,16 @@ static int speed_adjust;        // Speed adjustment in percent
 void SIDClockFreqChanged();
 
 // Resonance frequency polynomials
-static inline float CALC_RESONANCE_LP(float f)
+static inline fp16p16_t CALC_RESONANCE_LP(fp16p16_t f)
 {
-    return 227.755 - 1.7635 * f - 0.0176385 * f * f + 0.00333484 * f * f * f;
+    //return 227.755 - 1.7635 * f - 0.0176385 * f * f + 0.00333484 * f * f * f;
+    return ftofp16p16(227.755) - mulfp16p16(ftofp16p16(1.7635), f) - mulfp16p16(mulfp16p16(ftofp16p16(0.0176385), f), f) + mulfp16p16(mulfp16p16(mulfp16p16(ftofp16p16(0.00333484), f), f), f);
 }
 
-static inline float CALC_RESONANCE_HP(float f)
+static inline fp16p16_t CALC_RESONANCE_HP(fp16p16_t f)
 {
-    return 366.374 - 14.0052 * f + 0.603212 * f * f - 0.000880196 * f * f * f;
+    //return 366.374 - 14.0052 * f + 0.603212 * f * f - 0.000880196 * f * f * f;
+    return ftofp16p16(366.374) - mulfp16p16(ftofp16p16(14.0052), f) - mulfp16p16(mulfp16p16(ftofp16p16(0.603212), f), f) + mulfp16p16(mulfp16p16(mulfp16p16(ftofp16p16(0.000880196), f), f), f);
 }
 
 // Pseudo-random number generator for SID noise waveform (don't use f_rand()
@@ -205,10 +204,10 @@ struct osid_t {
     uint8 f_freq;                        // SID filter frequency (upper 8 bits)
     uint8 f_res;                        // Filter resonance (0..15)
 
-    filt_t f_ampl;                        // IIR filter input attenuation
-    filt_t d1, d2, g1, g2;                // IIR filter coefficients
-    filt_t xn1_l, xn2_l, yn1_l, yn2_l;    // IIR filter previous input/output signal (left and right channel)
-    filt_t xn1_r, xn2_r, yn1_r, yn2_r;
+    fp16p16_t f_ampl;                        // IIR filter input attenuation
+    fp16p16_t d1, d2, g1, g2;                // IIR filter coefficients
+    fp16p16_t xn1_l, xn2_l, yn1_l, yn2_l;    // IIR filter previous input/output signal (left and right channel)
+    fp16p16_t xn1_r, xn2_r, yn1_r, yn2_r;
 
     uint16 v4_left_gain;                // Gain of voice 4 on left channel (12.4 fixed)
     uint16 v4_right_gain;                // Gain of voice 4 on right channel (12.4 fixed)
@@ -428,8 +427,8 @@ static const uint8 eg_dr_shift[256] = {
 };
 
 // Filter tables
-static filt_t ffreq_lp[256];    // Low-pass resonance frequency table
-static filt_t ffreq_hp[256];    // High-pass resonance frequency table
+static fp16p16_t ffreq_lp[256];    // Low-pass resonance frequency table
+static fp16p16_t ffreq_hp[256];    // High-pass resonance frequency table
 
 // Table for sampled voices
 static const int16 sample_tab[16 * 3] = {
@@ -848,7 +847,7 @@ void SIDClockFreqChanged()
 {
     // Compute number of cycles per sample frame
     sid_cycles = cycles_per_second / obtained.freq;
-    sid_cycles_frac = ((float) cycles_per_second) / obtained.freq;
+    sid_cycles_frac = divfp16p16(itofp16p16(cycles_per_second), itofp16p16(obtained.freq));
 
     // Compute envelope table
     static const uint32 div[16] = {
@@ -1079,13 +1078,18 @@ static void calc_sid(osid_t *sid, int32 *sum_output_left, int32 *sum_output_righ
 
     // Filter
     if (enable_filters) {
-        float xn = ((float) sum_output_filter_left) * sid->f_ampl;
-        float yn = xn + sid->d1 * sid->xn1_l + sid->d2 * sid->xn2_l - sid->g1 * sid->yn1_l - sid->g2 * sid->yn2_l;
-        sum_output_filter_left = (int32) yn;
+        //float xn = ((float) sum_output_filter_left) * sid->f_ampl;
+        fp16p16_t xn = mulfp16p16(itofp16p16(sum_output_filter_left), sid->f_ampl);
+        //float yn = xn + sid->d1 * sid->xn1_l + sid->d2 * sid->xn2_l - sid->g1 * sid->yn1_l - sid->g2 * sid->yn2_l;
+        fp16p16_t yn = xn + mulfp16p16(sid->d1, sid->xn1_l) + mulfp16p16(sid->d2, sid->xn2_l) - mulfp16p16(sid->g1, sid->yn1_l) - mulfp16p16(sid->g2, sid->yn2_l);
+        sum_output_filter_left = fp16p16toi(yn);
         sid->yn2_l = sid->yn1_l; sid->yn1_l = yn; sid->xn2_l = sid->xn1_l; sid->xn1_l = xn;
-        xn = ((float) sum_output_filter_right) * sid->f_ampl;
-        yn = xn + sid->d1 * sid->xn1_r + sid->d2 * sid->xn2_r - sid->g1 * sid->yn1_r - sid->g2 * sid->yn2_r;
-        sum_output_filter_right = (int32) yn;
+
+        //xn = ((float) sum_output_filter_right) * sid->f_ampl;
+        xn = mulfp16p16(itofp16p16(sum_output_filter_right), sid->f_ampl);
+        //yn = xn + sid->d1 * sid->xn1_r + sid->d2 * sid->xn2_r - sid->g1 * sid->yn1_r - sid->g2 * sid->yn2_r;
+        yn = xn + mulfp16p16(sid->d1, sid->xn1_r) + mulfp16p16(sid->d2, sid->xn2_r) - mulfp16p16(sid->g1, sid->yn1_r) - mulfp16p16(sid->g2, sid->yn2_r);
+        sum_output_filter_right = fp16p16toi(yn);
         sid->yn2_r = sid->yn1_r; sid->yn1_r = yn; sid->xn2_r = sid->xn1_r; sid->xn1_r = xn;
     }
 
@@ -1188,7 +1192,8 @@ void SIDExecute()
     if (replay_start_time == 0)
         replay_start_time = now;
     uint32 replay_time = now - replay_start_time;
-    uint32 adj_nominal_replay_time = (uint32) ((cia_timer + 1) * 100000000.0 / (cycles_per_second * speed_adjust));
+    //uint32 adj_nominal_replay_time = (uint32) ((cia_timer + 1) * 100000000.0 / (cycles_per_second * speed_adjust));
+    uint32 adj_nominal_replay_time = fp16p16toi(divfp16p16(mulfp16p16(itofp16p16(cia_timer + 1), itofp16p16(100000000)), itofp16p16(cycles_per_second * speed_adjust)));
     int32 delay = adj_nominal_replay_time - replay_time - over_time;
     over_time = -delay;
     if (over_time < 0)
@@ -1225,35 +1230,38 @@ void osid_calc_filter(osid_t *sid)
     }
 
     // Calculate resonance frequency
-    filt_t fr;
+    fp16p16_t fr;
     if (sid->f_type == FILT_LP || sid->f_type == FILT_LPBP)
         fr = ffreq_lp[sid->f_freq];
     else
         fr = ffreq_hp[sid->f_freq];
 
     // Limit to <1/2 sample frequency, avoid div by 0 in case FILT_NOTCH below
-    filt_t arg = fr / ((float) (obtained.freq >> 1));
-    if (arg > 0.99)
-        arg = 0.99;
-    if (arg < 0.01)
-        arg = 0.01;
+    //filt_t arg = fr / ((float) (obtained.freq >> 1));
+    fp16p16_t arg = divfp16p16(fr, itofp16p16(obtained.freq >> 1));
+    if (arg > ftofp16p16(0.99))
+        arg = ftofp16p16(0.99);
+    if (arg < ftofp16p16(0.01))
+        arg = ftofp16p16(0.01);
 
     // Calculate poles (resonance frequency and resonance)
     // The (complex) poles are at
     //   zp_1/2 = (-g1 +/- sqrt(g1^2 - 4*g2)) / 2
-    sid->g2 = 0.55 + 1.2 * arg * arg - 1.2 * arg + ((float) sid->f_res) * 0.0133333333;
-    sid->g1 = -2.0 * sqrt(sid->g2) * cos(M_PI * arg);
+    //sid->g2 = 0.55 + 1.2 * arg * arg - 1.2 * arg + ((float) sid->f_res) * 0.0133333333;
+    sid->g2 = ftofp16p16(0.55) + mulfp16p16(mulfp16p16(ftofp16p16(1.2), arg), arg) + mulfp16p16(itofp16p16(sid->f_res), ftofp16p16(0.0133333333));
+    //sid->g1 = -2.0 * sqrt(sid->g2) * cos(M_PI * arg);
+    sid->g1 = mulfp16p16(mulfp16p16(ftofp16p16(-2.0), sqrtufp16p16(sid->g2)), dtofp16p16(cos(fp16p16tod(mulfp16p16(F_PI, arg)))));
 
     // Increase resonance if LP/HP combined with BP
     if (sid->f_type == FILT_LPBP || sid->f_type == FILT_HPBP)
-        sid->g2 += 0.1;
+        sid->g2 += ftofp16p16(0.1);
 
     // Stabilize filter
-    if (fabs(sid->g1) >= sid->g2 + 1.0) {
-        if (sid->g1 > 0.0)
-            sid->g1 = sid->g2 + 0.99;
+    if (abs(sid->g1) >= sid->g2 + ftofp16p16(1.0)) {
+        if (sid->g1 > ftofp16p16(0.0))
+            sid->g1 = sid->g2 + ftofp16p16(0.99);
         else
-            sid->g1 = -(sid->g2 + 0.99);
+            sid->g1 = -(sid->g2 + ftofp16p16(0.99));
     }
 
     // Calculate roots (filter characteristic) and input attenuation
@@ -1263,38 +1271,46 @@ void osid_calc_filter(osid_t *sid)
 
         case FILT_LPBP:
         case FILT_LP:        // Both roots at -1, H(1)=1
-            sid->d1 = 2.0; sid->d2 = 1.0;
-            sid->f_ampl = 0.25 * (1.0 + sid->g1 + sid->g2);
+            sid->d1 = ftofp16p16(2.0); sid->d2 = ftofp16p16(1.0);
+            sid->f_ampl = mulfp16p16(ftofp16p16(0.25), (ftofp16p16(1.0) + sid->g1 + sid->g2));
             break;
 
         case FILT_HPBP:
         case FILT_HP:        // Both roots at 1, H(-1)=1
-            sid->d1 = -2.0; sid->d2 = 1.0;
-            sid->f_ampl = 0.25 * (1.0 - sid->g1 + sid->g2);
+            sid->d1 = ftofp16p16(-2.0); sid->d2 = ftofp16p16(1.0);
+            sid->f_ampl = mulfp16p16(ftofp16p16(0.25), (ftofp16p16(1.0) - sid->g1 + sid->g2));
             break;
 
         case FILT_BP: {        // Roots at +1 and -1, H_max=1
-            sid->d1 = 0.0; sid->d2 = -1.0;
-            float c = sqrt(sid->g2*sid->g2 + 2.0*sid->g2 - sid->g1*sid->g1 + 1.0);
-            sid->f_ampl = 0.25 * (-2.0*sid->g2*sid->g2 - (4.0+2.0*c)*sid->g2 - 2.0*c + (c+2.0)*sid->g1*sid->g1 - 2.0) / (-sid->g2*sid->g2 - (c+2.0)*sid->g2 - c + sid->g1*sid->g1 - 1.0);
+            sid->d1 = ftofp16p16(0.0); sid->d2 = ftofp16p16(-1.0);
+            //float c = sqrt(sid->g2*sid->g2 + 2.0*sid->g2 - sid->g1*sid->g1 + 1.0);
+            fp16p16_t c = sqrtufp16p16((mulfp16p16(sid->g2, sid->g2) + mulfp16p16(ftofp16p16(2.0), sid->g2) - mulfp16p16(sid->g1, sid->g1) + ftofp16p16(1.0)));
+            //sid->f_ampl = 0.25 * (-2.0*sid->g2*sid->g2 - (4.0+2.0*c)*sid->g2 - 2.0*c + (c+2.0)*sid->g1*sid->g1 - 2.0) / (-sid->g2*sid->g2 - (c+2.0)*sid->g2 - c + sid->g1*sid->g1 - 1.0);
+            sid->f_ampl = divfp16p16(mulfp16p16(ftofp16p16(0.25), (mulfp16p16(mulfp16p16(ftofp16p16(-2.0), sid->g2), sid->g2) - mulfp16p16(ftofp16p16(4.0)+mulfp16p16(ftofp16p16(2.0), c), sid->g2) - mulfp16p16(ftofp16p16(2.0), c) + mulfp16p16(mulfp16p16(c+ftofp16p16(2.0), sid->g1), sid->g1) - ftofp16p16(2.0))), mulfp16p16(-sid->g2, sid->g2) - mulfp16p16(c+ftofp16p16(2.0), sid->g2) - c + mulfp16p16(sid->g1, sid->g1) - ftofp16p16(1.0));
             break;
         }
 
         case FILT_NOTCH:    // Roots at exp(i*pi*arg) and exp(-i*pi*arg), H(1)=1 (arg>=0.5) or H(-1)=1 (arg<0.5)
-            sid->d1 = -2.0 * cos(M_PI * arg); sid->d2 = 1.0;
-            if (arg >= 0.5)
-                sid->f_ampl = 0.5 * (1.0 + sid->g1 + sid->g2) / (1.0 - cos(M_PI * arg));
+            //sid->d1 = -2.0 * cos(M_PI * arg); sid->d2 = 1.0;
+            sid->d1 = mulfp16p16(ftofp16p16(-2.0), dtofp16p16(cos(fp16p16tod(mulfp16p16(F_PI, arg))))); sid->d2 = ftofp16p16(1.0);
+            if (arg >= ftofp16p16(0.5))
+                //sid->f_ampl = 0.5 * (1.0 + sid->g1 + sid->g2) / (1.0 - cos(M_PI * arg));
+                sid->f_ampl = divfp16p16(mulfp16p16(ftofp16p16(0.5), (ftofp16p16(1.0) + sid->g1 + sid->g2)), ftofp16p16(1.0) - fp16p16tod(cos(fp16p16tod(mulfp16p16(F_PI, arg)))));
             else
-                sid->f_ampl = 0.5 * (1.0 - sid->g1 + sid->g2) / (1.0 + cos(M_PI * arg));
+                //sid->f_ampl = 0.5 * (1.0 - sid->g1 + sid->g2) / (1.0 + cos(M_PI * arg));
+                sid->f_ampl = divfp16p16(mulfp16p16(ftofp16p16(0.5), (ftofp16p16(1.0) - sid->g1 + sid->g2)), ftofp16p16(1.0) + fp16p16tod(cos(fp16p16tod(mulfp16p16(F_PI, arg)))));
             break;
 
         // The following is pure guesswork...
         case FILT_ALL:        // Roots at 2*exp(i*pi*arg) and 2*exp(-i*pi*arg), H(-1)=1 (arg>=0.5) or H(1)=1 (arg<0.5)
-            sid->d1 = -4.0 * cos(M_PI * arg); sid->d2 = 4.0;
+            //sid->d1 = -4.0 * cos(M_PI * arg); sid->d2 = 4.0;
+            sid->d1 = mulfp16p16(ftofp16p16(-4.0), dtofp16p16(cos(fp16p16tod(mulfp16p16(F_PI, arg))))); sid->d2 = ftofp16p16(4.0);
             if (arg >= 0.5)
-                sid->f_ampl = (1.0 - sid->g1 + sid->g2) / (5.0 + 4.0 * cos(M_PI * arg));
+                //sid->f_ampl = (1.0 - sid->g1 + sid->g2) / (5.0 + 4.0 * cos(M_PI * arg));
+                sid->f_ampl = divfp16p16(ftofp16p16(1.0) - sid->g1 + sid->g2, ftofp16p16(5.0) + mulfp16p16(ftofp16p16(4.0), dtofp16p16(cos(fp16p16tod(mulfp16p16(F_PI, arg))))));
             else
-                sid->f_ampl = (1.0 + sid->g1 + sid->g2) / (5.0 - 4.0 * cos(M_PI * arg));
+                //sid->f_ampl = (1.0 + sid->g1 + sid->g2) / (5.0 - 4.0 * cos(M_PI * arg));
+                sid->f_ampl = divfp16p16(ftofp16p16(1.0) + sid->g1 + sid->g2, ftofp16p16(5.0) - mulfp16p16(ftofp16p16(4.0), dtofp16p16(cos(fp16p16tod(mulfp16p16(F_PI, arg))))));
             break;
 
         default:
@@ -1393,14 +1409,16 @@ void osid_write(osid_t *sid, uint32 adr, uint32 byte, cycle_t now, bool rmw)
         case 7:
         case 14:
             sid->voice[v].freq = (sid->voice[v].freq & 0xff00) | byte;
-            sid->voice[v].add = (uint32) ((float) sid->voice[v].freq) * sid_cycles_frac;
+            //sid->voice[v].add = (uint32) ((float) sid->voice[v].freq) * sid_cycles_frac;
+            sid->voice[v].add = fp16p16toi(mulfp16p16(itofp16p16(sid->voice[v].freq), sid_cycles_frac));
             break;
 
         case 1:
         case 8:
         case 15:
             sid->voice[v].freq = (sid->voice[v].freq & 0xff) | (byte << 8);
-            sid->voice[v].add = (uint32) ((float) sid->voice[v].freq) * sid_cycles_frac;
+            //sid->voice[v].add = (uint32) ((float) sid->voice[v].freq) * sid_cycles_frac;
+            sid->voice[v].add = fp16p16toi(mulfp16p16(itofp16p16(sid->voice[v].freq), sid_cycles_frac));
             break;
 
         case 2:
