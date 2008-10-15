@@ -735,6 +735,7 @@ static uint64_t _fp64_x2,  _fp64_x3,  _fp64_x4,  _fp64_x5,  _fp64_x6,
  * the program that uses this macro lib?? Have to think about it.
  */
 
+#define __FPM_LEAVE_WARNINGS___
 #ifndef __FPM_LEAVE_WARNINGS___
 static void __fixed_point_math_make_compiler_warnings_go_away(void)
 {

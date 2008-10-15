@@ -35,6 +35,8 @@
 #define DEBUG 0
 #include "debug.h"
 
+#include "fixedpointmath.h"
+
 
 #undef USE_FIXPOINT_MATHS
 
