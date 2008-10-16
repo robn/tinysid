@@ -1273,13 +1273,17 @@ void osid_calc_filter(osid_t *sid)
 
         case FILT_LPBP:
         case FILT_LP:        // Both roots at -1, H(1)=1
+            //sid->d1 = 2.0; sid->d2 = 1.0;
             sid->d1 = ftofp24p8(2.0); sid->d2 = ftofp24p8(1.0);
+            //f_ampl = 0.25 * (1.0 + sid->g1 + sid->g2);
             sid->f_ampl = mulfp24p8(ftofp24p8(0.25), (ftofp24p8(1.0) + sid->g1 + sid->g2));
             break;
 
         case FILT_HPBP:
         case FILT_HP:        // Both roots at 1, H(-1)=1
+            //sid->d1 = -2.0; sid->d2 = 1.0;
             sid->d1 = ftofp24p8(-2.0); sid->d2 = ftofp24p8(1.0);
+            //f_ampl = 0.25 * (1.0 - sid->g1 + sid->g2);
             sid->f_ampl = mulfp24p8(ftofp24p8(0.25), (ftofp24p8(1.0) - sid->g1 + sid->g2));
             break;
 
