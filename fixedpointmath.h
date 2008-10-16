@@ -157,10 +157,12 @@
 
 #define sqrtufp8p8(x)   _sqrtufp8p8(x)
 #define sqrtufp24p8(x)  _sqrtufp24p8(x)
+#define sqrtufp20p12(x) _sqrtufp20p12(x)
 #define sqrtufp16p16(x) _sqrtufp16p16(x)
 #define sqrtufp8p24(x)  _sqrtufp8p24(x)
 #define sqrtfp8p8(x)    _sqrtfp8p8(x)
 #define sqrtfp24p8(x)   _sqrtfp24p8(x)
+#define sqrtfp20p12(x)  _sqrtfp20p12(x)
 #define sqrtfp16p16(x)  _sqrtfp16p16(x)
 #define sqrtfp8p24(x)   _sqrtfp8p24(x)
 

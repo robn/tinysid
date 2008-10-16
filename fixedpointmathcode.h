@@ -240,6 +240,7 @@ typedef uint32_t ufp8p24_t;
 #define unused __attribute__((unused))
 static ufp8p8_t   _ufp8p8tmp unused,   _ufp8p8tmp2 unused,    _ufp8p8tmp3 unused;
 static ufp24p8_t  _ufp24p8tmp unused,  _ufp24p8tmp2 unused,   _ufp24p8tmp3 unused;
+static ufp20p12_t _ufp20p12tmp unused, _ufp20p12tmp2 unused,  _ufp20p12tmp3 unused;
 static ufp16p16_t _ufp16p16tmp unused, _ufp16p16tmp2 unused,  _ufp16p16tmp3 unused;
 static ufp8p24_t  _ufp8p24tmp unused,  _ufp8p24tmp2 unused,   _ufp8p24tmp3 unused;
 #undef unused
@@ -252,6 +253,10 @@ static ufp8p24_t  _ufp8p24tmp unused,  _ufp8p24tmp2 unused,   _ufp8p24tmp3 unuse
                                     )
 #define _convergeufp24p8(a,b,m,x)   ( \
             ( (m=(_ualtb32(_mulufp24p8(_mid(a,b),_mid(a,b)),x)))||1) &&   \
+            ( (a=m*_mid(a,b)+(1-m)*a)||1 ) && ( (b=(1-m)*_mid(a,b)+m*b)||1 ) \
+                                    )
+#define _convergeufp20p12(a,b,m,x)   ( \
+            ( (m=(_ualtb32(_mulufp20p12(_mid(a,b),_mid(a,b)),x)))||1) &&   \
             ( (a=m*_mid(a,b)+(1-m)*a)||1 ) && ( (b=(1-m)*_mid(a,b)+m*b)||1 ) \
                                     )
 #define _convergeufp16p16(a,b,m,x)   ( \
@@ -301,6 +306,27 @@ static ufp8p24_t  _ufp8p24tmp unused,  _ufp8p24tmp2 unused,   _ufp8p24tmp3 unuse
                                 && _convergeufp24p8(a,b,m,x) \
                                 ? _mid(a,b) : 0
 
+#define __sqrtufp20p12(a,b,m,x)  ( ((m=_uagtb32(x,(4<<12)))||1) && \
+                                   ((a=m*(1<<12))||1) &&               \
+                                   ((b=m*(x>>1)+(1-m)*(x<<1))||1)     ) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                && _convergeufp20p12(a,b,m,x) \
+                                ? _mid(a,b) : 0
+
 #define __sqrtufp16p16(a,b,m,x)  ( ((m=_uagtb32(x,(4<<16)))||1) && \
                                    ((a=m*(1<<16))||1) &&               \
                                    ((b=m*(x>>1)+(1-m)*(x<<1))||1)     ) \
@@ -343,6 +369,8 @@ static ufp8p24_t  _ufp8p24tmp unused,  _ufp8p24tmp2 unused,   _ufp8p24tmp3 unuse
                                            _ufp8p8tmp3,   x)
 #define _sqrtufp24p8(x)     __sqrtufp24p8 (_ufp24p8tmp,  _ufp24p8tmp2,  \
                                            _ufp24p8tmp3,  x)
+#define _sqrtufp20p12(x)    __sqrtufp20p12(_ufp20p12tmp, _ufp20p12tmp2, \
+                                           _ufp20p12tmp3, x)
 #define _sqrtufp16p16(x)    __sqrtufp16p16(_ufp16p16tmp, _ufp16p16tmp2, \
                                            _ufp16p16tmp3, x)
 #define _sqrtufp8p24(x)     __sqrtufp8p24 (_ufp8p24tmp,  _ufp8p24tmp2,  \
@@ -350,6 +378,7 @@ static ufp8p24_t  _ufp8p24tmp unused,  _ufp8p24tmp2 unused,   _ufp8p24tmp3 unuse
 
 #define _sqrtfp8p8(x)       (x>0 ? _sqrtufp8p8(x)   : 0)
 #define _sqrtfp24p8(x)      (x>0 ? _sqrtufp24p8(x)  : 0)
+#define _sqrtfp20p12(x)     (x>0 ? _sqrtufp20p12(x) : 0)
 #define _sqrtfp16p16(x)     (x>0 ? _sqrtufp16p16(x) : 0)
 #define _sqrtfp8p24(x)      (x>0 ? _sqrtufp8p24(x)  : 0)
 
