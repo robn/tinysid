@@ -97,7 +97,7 @@ static inline fp16p16_t CALC_RESONANCE_LP(fp16p16_t f)
 static inline fp16p16_t CALC_RESONANCE_HP(fp16p16_t f)
 {
     //return 366.374 - 14.0052 * f + 0.603212 * f * f - 0.000880196 * f * f * f;
-    return ftofp16p16(366.374) - mulfp16p16(ftofp16p16(14.0052), f) - mulfp16p16(mulfp16p16(ftofp16p16(0.603212), f), f) + mulfp16p16(mulfp16p16(mulfp16p16(ftofp16p16(0.000880196), f), f), f);
+    return ftofp16p16(366.374) - mulfp16p16(ftofp16p16(14.0052), f) + mulfp16p16(mulfp16p16(ftofp16p16(0.603212), f), f) - mulfp16p16(mulfp16p16(mulfp16p16(ftofp16p16(0.000880196), f), f), f);
 }
 
 // Pseudo-random number generator for SID noise waveform (don't use f_rand()
@@ -645,11 +645,11 @@ static void prefs_dualsep_changed(const char *name, int32 from, int32 to)
 static void set_cycles_per_second(const char *to)
 {
     if (strncmp(to, "6569", 4) == 0)
-        cycles_per_second = PAL_CLOCK;
+        cycles_per_second = fp16p16toi(PAL_CLOCK);
     else if (strcmp(to, "6567R5") == 0)
-        cycles_per_second = NTSC_OLD_CLOCK;
+        cycles_per_second = fp16p16toi(NTSC_OLD_CLOCK);
     else
-        cycles_per_second = NTSC_CLOCK;
+        cycles_per_second = fp16p16toi(NTSC_CLOCK);
 }
 
 static void prefs_victype_changed(const char *name, const char *from, const char *to)
@@ -1193,7 +1193,7 @@ void SIDExecute()
         replay_start_time = now;
     uint32 replay_time = now - replay_start_time;
     //uint32 adj_nominal_replay_time = (uint32) ((cia_timer + 1) * 100000000.0 / (cycles_per_second * speed_adjust));
-    uint32 adj_nominal_replay_time = fp16p16toi(divfp16p16(mulfp16p16(itofp16p16(cia_timer + 1), itofp16p16(100000000)), itofp16p16(cycles_per_second * speed_adjust)));
+    uint32 adj_nominal_replay_time = fp16p16toi(divfp16p16(mulfp16p16(itofp16p16(cia_timer + 1), ftofp16p16(100000000.0)), itofp16p16(cycles_per_second * speed_adjust)));
     int32 delay = adj_nominal_replay_time - replay_time - over_time;
     over_time = -delay;
     if (over_time < 0)
