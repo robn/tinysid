@@ -1195,7 +1195,7 @@ void SIDExecute()
         replay_start_time = now;
     uint32 replay_time = now - replay_start_time;
     //uint32 adj_nominal_replay_time = (uint32) ((cia_timer + 1) * 100000000.0 / (cycles_per_second * speed_adjust));
-    uint32 adj_nominal_replay_time = fp24p8toi(divfp24p8(mulfp24p8(itofp24p8(cia_timer + 1), ftofp24p8(100000000.0)), itofp24p8(cycles_per_second * speed_adjust)));
+    uint32 adj_nominal_replay_time = (cia_timer + 1) * 100000000 / (cycles_per_second * speed_adjust);
     int32 delay = adj_nominal_replay_time - replay_time - over_time;
     over_time = -delay;
     if (over_time < 0)
