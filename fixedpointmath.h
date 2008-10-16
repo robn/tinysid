@@ -34,9 +34,11 @@
 
 #define itofp8p8(x)     _itofp8p8(x)
 #define itofp24p8(x)    _itofp24p8(x)
+#define itofp20p12(x)   _itofp20p12(x)
 #define itofp16p16(x)   _itofp16p16(x)
 #define itofp8p24(x)    _itofp8p24(x)
 #define itoufp8p8(x)    _itoufp8p8(x)
+#define itoufp20p12(x)  _itoufp20p12(x)
 #define itoufp24p8(x)   _itoufp24p8(x)
 #define itoufp16p16(x)  _itoufp16p16(x)
 #define itoufp8p24(x)   _itoufp8p24(x)
@@ -45,10 +47,12 @@
 
 #define ftofp8p8(x)     _ftofp8p8(x)
 #define ftofp24p8(x)    _ftofp24p8(x)
+#define ftofp20p12(x)   _ftofp20p12(x)
 #define ftofp16p16(x)   _ftofp16p16(x)
 #define ftofp8p24(x)    _ftofp8p24(x)
 #define ftoufp8p8(x)    _ftoufp8p8(x)
 #define ftoufp24p8(x)   _ftoufp24p8(x)
+#define ftoufp20p12(x)  _ftoufp20p12(x)
 #define ftoufp16p16(x)  _ftoufp16p16(x)
 #define ftoufp8p24(x)   _ftoufp8p24(x)
 
@@ -56,10 +60,12 @@
 
 #define dtofp8p8(x)     _dtofp8p8(x)
 #define dtofp24p8(x)    _dtofp24p8(x)
+#define dtofp20p12(x)   _dtofp20p12(x)
 #define dtofp16p16(x)   _dtofp16p16(x)
 #define dtofp8p24(x)    _dtofp8p24(x)
 #define dtoufp8p8(x)    _dtoufp8p8(x)
 #define dtoufp24p8(x)   _dtoufp24p8(x)
+#define dtoufp20p12(x)  _dtoufp20p12(x)
 #define dtoufp16p16(x)  _dtoufp16p16(x)
 #define dtoufp8p24(x)   _dtoufp8p24(x)
 
@@ -67,10 +73,12 @@
 
 #define fp8p8toi(x)     _fp8p8toi(x)
 #define fp24p8toi(x)    _fp24p8toi(x)
+#define fp20p12toi(x)   _fp20p12toi(x)
 #define fp16p16toi(x)   _fp16p16toi(x)
 #define fp8p24toi(x)    _fp8p24toi(x)
 #define ufp8p8toi(x)    _ufp8p8toi(x)
 #define ufp24p8toi(x)   _ufp24p8toi(x)
+#define ufp20p12toi(x)  _ufp20p12toi(x)
 #define ufp16p16toi(x)  _ufp16p16toi(x)
 #define ufp8p24toi(x)   _ufp8p24toi(x)
 
@@ -78,10 +86,12 @@
 
 #define fp8p8tof(x)     _fp8p8tof(x)
 #define fp24p8tof(x)    _fp24p8tof(x)
+#define fp20p12tof(x)   _fp20p12tof(x)
 #define fp16p16tof(x)   _fp16p16tof(x)
 #define fp8p24tof(x)    _fp8p24tof(x)
 #define ufp8p8tof(x)    _ufp8p8tof(x)
 #define ufp24p8tof(x)   _ufp24p8tof(x)
+#define ufp20p12tof(x)  _ufp20p12tof(x)
 #define ufp16p16tof(x)  _ufp16p16tof(x)
 #define ufp8p24tof(x)   _ufp8p24tof(x)
 
@@ -89,10 +99,12 @@
 
 #define fp8p8tod(x)     _fp8p8tod(x)
 #define fp24p8tod(x)    _fp24p8tod(x)
+#define fp20p12tod(x)   _fp20p12tod(x)
 #define fp16p16tod(x)   _fp16p16tod(x)
 #define fp8p24tod(x)    _fp8p24tod(x)
 #define ufp8p8tod(x)    _ufp8p8tod(x)
 #define ufp24p8tod(x)   _ufp24p8tod(x)
+#define ufp20p12tod(x)  _ufp20p12tod(x)
 #define ufp16p16tod(x)  _ufp16p16tod(x)
 #define ufp8p24tod(x)   _ufp8p24tod(x)
 
@@ -100,10 +112,12 @@
 
 #define mulfp8p8(x,y)    _mulfp8p8(x,y)
 #define mulfp24p8(x,y)   _mulfp24p8(x,y)
+#define mulfp20p12(x,y)  _mulfp20p12(x,y)
 #define mulfp16p16(x,y)  _mulfp16p16(x,y)
 #define mulfp8p24(x,y)   _mulfp8p24(x,y)
 #define mulufp8p8(x,y)   _mulufp8p8(x,y)
 #define mulufp24p8(x,y)  _mulufp24p8(x,y)
+#define mulufp20p12(x,y) _mulufp20p12(x,y)
 #define mulufp16p16(x,y) _mulufp16p16(x,y)
 #define mulufp8p24(x,y)  _mulufp8p24(x,y)
 
@@ -111,10 +125,12 @@
 
 #define divfp8p8(x,y)    _divfp8p8(x,y)
 #define divfp24p8(x,y)   _divfp24p8(x,y)
+#define divfp20p12(x,y)  _divfp20p12(x,y)
 #define divfp16p16(x,y)  _divfp16p16(x,y)
 #define divfp8p24(x,y)   _divfp8p24(x,y)
 #define divufp8p8(x,y)   _divufp8p8(x,y)
 #define divufp24p8(x,y)  _divufp24p8(x,y)
+#define divufp20p12(x,y) _divufp20p12(x,y)
 #define divufp16p16(x,y) _divufp16p16(x,y)
 #define divufp8p24(x,y)  _divufp8p24(x,y)
 

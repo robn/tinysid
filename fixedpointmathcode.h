@@ -25,6 +25,7 @@
 
 typedef int16_t fp8p8_t;
 typedef int32_t fp24p8_t;
+typedef int32_t fp20p12_t;
 typedef int32_t fp16p16_t;
 typedef int32_t fp8p24_t;
 
@@ -32,6 +33,7 @@ typedef int32_t fp8p24_t;
 
 typedef uint16_t ufp8p8_t;
 typedef uint32_t ufp24p8_t;
+typedef uint32_t ufp20p12_t;
 typedef uint32_t ufp16p16_t;
 typedef uint32_t ufp8p24_t;
 
@@ -55,10 +57,12 @@ typedef uint32_t ufp8p24_t;
 
 #define _itofp8p8(x)    ( (int16_t)  (x) << 8 )
 #define _itofp24p8(x)   ( (int32_t)  (x) << 8 )
+#define _itofp20p12(x)  ( (int32_t)  (x) << 12 )
 #define _itofp16p16(x)  ( (int32_t)  (x) << 16 )
 #define _itofp8p24(x)   ( (int32_t)  (x) << 24 )
 #define _itoufp8p8(x)   ( (uint16_t) (x) << 8 )
 #define _itoufp24p8(x)  ( (uint32_t) (x) << 8 )
+#define _itoufp20p12(x) ( (uint32_t) (x) << 12 )
 #define _itoufp16p16(x) ( (uint32_t) (x) << 16 )
 #define _itoufp8p24(x)  ( (uint32_t) (x) << 24 )
 
@@ -66,10 +70,12 @@ typedef uint32_t ufp8p24_t;
 
 #define _ftofp8p8(x)    ( (fp8p8_t)    ((x) * 256.0) )
 #define _ftofp24p8(x)   ( (fp24p8_t)   ((x) * 256.0) )
+#define _ftofp20p12(x)  ( (fp20p12_t)  ((x) * 4096.0) )
 #define _ftofp16p16(x)  ( (fp16p16_t)  ((x) * 65536.0) )
 #define _ftofp8p24(x)   ( (fp8p24_t)   ((x) * 16777216.0) )
 #define _ftoufp8p8(x)   ( (ufp8p8_t)   ((x) * 256.0) )
 #define _ftoufp24p8(x)  ( (ufp24p8_t)  ((x) * 256.0) )
+#define _ftoufp20p12(x) ( (ufp20p12_t) ((x) * 4096.0) )
 #define _ftoufp16p16(x) ( (ufp16p16_t) ((x) * 65536.0) )
 #define _ftoufp8p24(x)  ( (ufp8p24_t)  ((x) * 16777216.0) )
 
@@ -77,10 +83,12 @@ typedef uint32_t ufp8p24_t;
 
 #define _dtofp8p8(x)    _ftofp8p8(x)
 #define _dtofp24p8(x)   _ftofp24p8(x)
+#define _dtofp20p12(x)  _ftofp20p12(x)
 #define _dtofp16p16(x)  _ftofp16p16(x)
 #define _dtofp8p24(x)   _ftofp8p24(x)
 #define _dtoufp8p8(x)   _ftoufp8p8(x)
 #define _dtoufp24p8(x)  _ftoufp24p8(x)
+#define _dtoufp20p12(x) _ftoufp20p12(x)
 #define _dtoufp16p16(x) _ftoufp16p16(x)
 #define _dtoufp8p24(x)  _ftoufp8p24(x)
 
@@ -88,10 +96,12 @@ typedef uint32_t ufp8p24_t;
 
 #define _fp8p8toi(x)    ( (x) >> 8 )
 #define _fp24p8toi(x)   ( (x) >> 8 )
+#define _fp20p12toi(x)  ( (x) >> 12 )
 #define _fp16p16toi(x)  ( (x) >> 16 )
 #define _fp8p24toi(x)   ( (x) >> 24 )
 #define _ufp8p8toi(x)   _fp8p8toi(x)
 #define _ufp24p8toi(x)  _fp24p8toi(x)
+#define _ufp20p12toi(x) _fp20p12toi(x)
 #define _ufp16p16toi(x) _fp16p16toi(x)
 #define _ufp8p24toi(x)  _fp8p24toi(x)
 
@@ -99,10 +109,12 @@ typedef uint32_t ufp8p24_t;
 
 #define _fp8p8tof(x)    ( (float) (x) / 256.0 )
 #define _fp24p8tof(x)   ( (float) (x) / 256.0 )
+#define _fp20p12tof(x)  ( (float) (x) / 4096.0 )
 #define _fp16p16tof(x)  ( (float) (x) / 65536.0 )
 #define _fp8p24tof(x)   ( (float) (x) / 16777216.0 )
 #define _ufp8p8tof(x)   _fp8p8tof(x)
 #define _ufp24p8tof(x)  _fp24p8tof(x)
+#define _ufp20p12tof(x) _fp20p12tof(x)
 #define _ufp16p16tof(x) _fp16p16tof(x)
 #define _ufp8p24tof(x)  _fp8p24tof(x)
 
@@ -110,10 +122,12 @@ typedef uint32_t ufp8p24_t;
 
 #define _fp8p8tod(x)    ( (double) (x) / 256.0 )
 #define _fp24p8tod(x)   ( (double) (x) / 256.0 )
+#define _fp20p12tod(x)  ( (double) (x) / 4096.0 )
 #define _fp16p16tod(x)  ( (double) (x) / 65536.0 )
 #define _fp8p24tod(x)   ( (double) (x) / 16777216.0 )
 #define _ufp8p8tod(x)   _fp8p8tod(x)
 #define _ufp24p8tod(x)  _fp24p8tod(x)
+#define _ufp20p12tod(x) _fp20p12tod(x)
 #define _ufp16p16tod(x) _fp16p16tod(x)
 #define _ufp8p24tod(x)  _fp8p24tod(x)
 
@@ -121,37 +135,56 @@ typedef uint32_t ufp8p24_t;
 
 #define _fp8p8tofp8p8(x)                        (x)
 #define _fp8p8tofp24p8(x)         ((fp24p8_t)   (x))
+#define _fp8p8tofp20p12(x)      ( ((fp20p12_t)  (x)) <<  4 )
 #define _fp8p8tofp16p16(x)      ( ((fp16p16_t)  (x)) <<  8 )
 #define _fp8p8tofp8p24(x)       ( ((fp8p24_t)   (x)) << 16 )
 #define _ufp8p8toufp8p8(x)                      (x)
 #define _ufp8p8toufp24p8(x)       ((ufp24p8_t)  (x))
+#define _ufp8p8toufp20p12(x)    ( ((fp20p12_t)  (x)) <<  4 )
 #define _ufp8p8toufp16p16(x)    ( ((ufp16p16_t) (x)) <<  8 )
 #define _ufp8p8toufp8p24(x)     ( ((ufp8p24_t)  (x)) << 16 )
 
 #define _fp24p8tofp8p8(x)         ((fp8p8_t)    (x))
 #define _fp24p8tofp24p8(x)                      (x)
+#define _fp24p8tofp20p12(x)     ( ((fp20p12_t)  (x)) << 4 )
 #define _fp24p8tofp16p16(x)     ( ((fp16p16_t)  (x)) << 8 )
 #define _fp24p8tofp8p24(x)      ( ((fp8p24_t)   (x)) << 16)
 #define _ufp24p8toufp8p8(x)       ((ufp8p8_t)   (x))
 #define _ufp24p8toufp24p8(x)                    (x)
+#define _ufp24p8toufp20p12(x)   ( ((fp20p12_t)  (x)) << 4 )
 #define _ufp24p8toufp16p16(x)   ( ((ufp16p16_t) (x)) << 8 )
 #define _ufp24p8toufp8p24(x)    ( ((ufp8p24_t)  (x)) << 16)
 
+#define _fp20p12tofp8p8(x)      ( (fp8p8_t)    ((x)  >> 4 ) )
+#define _fp20p12tofp24p8(x)     ( (fp24p8_t)   ((x)  >> 4 ) )
+#define _fp20p12tofp20p12(x)                    (x)
+#define _fp20p12tofp16p16(x)    ( (fp16p16_t)  ((x)  << 4 ) )
+#define _fp20p12tofp8p24(x)     ( (fp8p24_t)   ((x)  << 12 ) )
+#define _ufp20p12toufp8p8(x)    ( (ufp8p8_t)   ((x)  >> 4 ) )
+#define _ufp20p12toufp24p8(x)   ( (ufp24p8_t)  ((x)  >> 4 ) )
+#define _ufp20p12tofp20p12(x)                   (x)
+#define _fp20p12tofp16p16(x)    ( (fp16p16_t)  ((x)  << 4 ) )
+#define _ufp20p12toufp8p24(x)   ( (ufp8p24_t)  ((x)  << 12 ) )
+
 #define _fp16p16tofp8p8(x)      ( (fp8p8_t)    ((x)  >> 8 ) )
 #define _fp16p16tofp24p8(x)     ( (fp24p8_t)   ((x)  >> 8 ) )
+#define _fp16p16tofp20p12(x)    ( (fp20p12_t)  ((x)  >> 4 ) )
 #define _fp16p16tofp16p16(x)                    (x)
 #define _fp16p16tofp8p24(x)     ( (fp8p24_t)   ((x)  << 8 ) )
 #define _ufp16p16toufp8p8(x)    ( (ufp8p8_t)   ((x)  >> 8 ) )
+#define _fp16p16tofp20p12(x)    ( (fp20p12_t)  ((x)  >> 4 ) )
 #define _ufp16p16toufp24p8(x)   ( (ufp24p8_t)  ((x)  >> 8 ) )
 #define _ufp16p16toufp16p16(x)                  (x)
 #define _ufp16p16toufp8p24(x)   ( (ufp8p24_t)  ((x)  << 8 ) )
 
 #define _fp8p24tofp8p8(x)       ( (fp8p8_t)    ((x)  >> 16) )
 #define _fp8p24tofp24p8(x)      ( (fp24p8_t)   ((x)  >> 16) )
+#define _fp8p24tofp20p12(x)     ( (fp20p12_t)  ((x)  >> 12 ) )
 #define _fp8p24tofp16p16(x)     ( (fp16p16_t)  ((x)  >> 8 ) )
 #define _fp8p24tofp8p24(x)                      (x)
 #define _ufp8p24toufp8p8(x)     ( (ufp8p8_t)   ((x)  >> 16) )
 #define _ufp8p24toufp24p8(x)    ( (ufp24p8_t)  ((x)  >> 16) )
+#define _ufp8p24toufp20p12(x)   ( (fp20p12_t)  ((x)  >> 12 ) )
 #define _ufp8p24toufp16p16(x)   ( (ufp16p16_t) ((x)  >> 8 ) )
 #define _ufp8p24toufp8p24(x)                    (x)
 
@@ -163,10 +196,12 @@ typedef uint32_t ufp8p24_t;
 
 #define _mulfp8p8(x,y)    ( ( (int32_t)(x) *  (int32_t)(y)) >> 8  )
 #define _mulfp24p8(x,y)   ( ( (int64_t)(x) *  (int64_t)(y)) >> 8  )
+#define _mulfp20p12(x,y)  ( ( (int64_t)(x) *  (int64_t)(y)) >> 12 )
 #define _mulfp16p16(x,y)  ( ( (int64_t)(x) *  (int64_t)(y)) >> 16 )
 #define _mulfp8p24(x,y)   ( ( (int64_t)(x) *  (int64_t)(y)) >> 24 )
 #define _mulufp8p8(x,y)   ( ((uint32_t)(x) * (uint32_t)(y)) >> 8  )
 #define _mulufp24p8(x,y)  ( ((uint64_t)(x) * (uint64_t)(y)) >> 8  )
+#define _mulufp20p12(x,y) ( ((uint64_t)(x) * (uint64_t)(y)) >> 12 )
 #define _mulufp16p16(x,y) ( ((uint64_t)(x) * (uint64_t)(y)) >> 16 )
 #define _mulufp8p24(x,y)  ( ((uint64_t)(x) * (uint64_t)(y)) >> 24 )
 
@@ -174,10 +209,12 @@ typedef uint32_t ufp8p24_t;
 
 #define _divfp8p8(x,y)    ( ( (int32_t)(x) << 8 ) / (y) )
 #define _divfp24p8(x,y)   ( ( (int64_t)(x) << 8 ) / (y) )
+#define _divfp20p12(x,y)  ( ( (int64_t)(x) << 12) / (y) )
 #define _divfp16p16(x,y)  ( ( (int64_t)(x) << 16) / (y) )
 #define _divfp8p24(x,y)   ( ( (int64_t)(x) << 24) / (y) )
 #define _divufp8p8(x,y)   ( ((uint32_t)(x) << 8 ) / (y) )
 #define _divufp24p8(x,y)  ( ((uint64_t)(x) << 8 ) / (y) )
+#define _divufp20p12(x,y) ( ((uint64_t)(x) << 12) / (y) )
 #define _divufp16p16(x,y) ( ((uint64_t)(x) << 16) / (y) )
 #define _divufp8p24(x,y)  ( ((uint64_t)(x) << 24) / (y) )
 
