@@ -93,18 +93,19 @@ static int speed_adjust;        // Speed adjustment in percent
 void SIDClockFreqChanged();
 
 // Resonance frequency polynomials
-static inline fp24p8_t CALC_RESONANCE_LP(int f)
+// We use real floats here because it only runs once at startup and so the
+// speed hit is acceptable. Too much precision is lost otherwise.
+//
+// XXX a cursory glance suggests that the integer portion is never more than
+// 2^16. can we store this in a 16.16 instead?
+static inline fp24p8_t CALC_RESONANCE_LP(float f)
 {
-    fp24p8_t ff = itofp24p8(f);
-    //return 227.755 - 1.7635 * f - 0.0176385 * f * f + 0.00333484 * f * f * f;
-    return ftofp24p8(227.755) - mulfp24p8(ftofp24p8(1.7635), ff) - mulfp24p8(mulfp24p8(ftofp24p8(0.0176385), ff), ff) + mulfp24p8(mulfp24p8(mulfp24p8(ftofp24p8(0.00333484), ff), ff), ff);
+    return ftofp24p8(227.755 - 1.7635 * f - 0.0176385 * f * f + 0.00333484 * f * f * f);
 }
 
-static inline fp24p8_t CALC_RESONANCE_HP(int f)
+static inline fp24p8_t CALC_RESONANCE_HP(float f)
 {
-    fp24p8_t ff = itofp24p8(f);
-    //return 366.374 - 14.0052 * f + 0.603212 * f * f - 0.000880196 * f * f * f;
-    return ftofp24p8(366.374) - mulfp24p8(ftofp24p8(14.0052), ff) + mulfp24p8(mulfp24p8(ftofp24p8(0.603212), ff), ff) - mulfp24p8(mulfp24p8(mulfp24p8(ftofp24p8(0.000880196), ff), ff), ff);
+    return ftofp24p8(366.374 - 14.0052 * f + 0.603212 * f * f - 0.000880196 * f * f * f);
 }
 
 // Pseudo-random number generator for SID noise waveform (don't use f_rand()
