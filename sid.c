@@ -39,15 +39,19 @@
 
 
 // Some constants
-const fp24p8_t FP_0 = itofp24p8(0);
-const fp24p8_t FP_1 = itofp24p8(1);
-const fp24p8_t FP_2 = itofp24p8(2);
-const fp24p8_t FP_4 = itofp24p8(4);
+const fp8p24_t FP8P24_0 = itofp8p24(0);
+const fp8p24_t FP8P24_1 = itofp8p24(1);
+const fp8p24_t FP8P24_2 = itofp8p24(2);
+const fp8p24_t FP8P24_4 = itofp8p24(4);
 
-const fp24p8_t FP_PI = dtofp24p8(3.14159265358979323846);
+const fp24p8_t FP24P8_0 = itofp24p8(0);
+const fp24p8_t FP24P8_1 = itofp24p8(1);
+
+const fp16p16_t FP16P16_PI = dtofp16p16(3.14159265358979323846);
 
 // Cosine in degrees XXX replace with lut
-#define FP_COS_DEG(x) (dtofp24p8(cos(fp24p8tod(mulfp24p8(FP_PI, x)))))
+// cos(deg), where deg is 16.16 and return is 8.24
+#define FP8P24_COS_DEG_FP16P16(x) (dtofp8p24(cos(fp16p16tod(mulfp16p16(FP16P16_PI, x)))))
 
 // Desired and obtained audio formats
 static SDL_AudioSpec desired, obtained;
@@ -95,17 +99,14 @@ void SIDClockFreqChanged();
 // Resonance frequency polynomials
 // We use real floats here because it only runs once at startup and so the
 // speed hit is acceptable. Too much precision is lost otherwise.
-//
-// XXX a cursory glance suggests that the integer portion is never more than
-// 2^16. can we store this in a 16.16 instead?
-static inline fp24p8_t CALC_RESONANCE_LP(float f)
+static inline ufp16p16_t CALC_RESONANCE_LP(float f)
 {
-    return ftofp24p8(227.755 - 1.7635 * f - 0.0176385 * f * f + 0.00333484 * f * f * f);
+    return ftoufp16p16(227.755 - 1.7635 * f - 0.0176385 * f * f + 0.00333484 * f * f * f);
 }
 
-static inline fp24p8_t CALC_RESONANCE_HP(float f)
+static inline ufp16p16_t CALC_RESONANCE_HP(float f)
 {
-    return ftofp24p8(366.374 - 14.0052 * f + 0.603212 * f * f - 0.000880196 * f * f * f);
+    return ftoufp16p16(366.374 - 14.0052 * f + 0.603212 * f * f - 0.000880196 * f * f * f);
 }
 
 // Pseudo-random number generator for SID noise waveform (don't use f_rand()
@@ -212,8 +213,8 @@ struct osid_t {
     uint8 f_freq;                        // SID filter frequency (upper 8 bits)
     uint8 f_res;                        // Filter resonance (0..15)
 
-    fp24p8_t f_ampl;                        // IIR filter input attenuation
-    fp24p8_t d1, d2, g1, g2;                // IIR filter coefficients
+    fp8p24_t f_ampl;                        // IIR filter input attenuation
+    fp8p24_t d1, d2, g1, g2;                // IIR filter coefficients
     fp24p8_t xn1_l, xn2_l, yn1_l, yn2_l;    // IIR filter previous input/output signal (left and right channel)
     fp24p8_t xn1_r, xn2_r, yn1_r, yn2_r;
 
@@ -435,8 +436,8 @@ static const uint8 eg_dr_shift[256] = {
 };
 
 // Filter tables
-static fp24p8_t ffreq_lp[256];    // Low-pass resonance frequency table
-static fp24p8_t ffreq_hp[256];    // High-pass resonance frequency table
+static fp16p16_t ffreq_lp[256];    // Low-pass resonance frequency table
+static fp16p16_t ffreq_hp[256];    // High-pass resonance frequency table
 
 // Table for sampled voices
 static const int16 sample_tab[16 * 3] = {
@@ -806,10 +807,10 @@ void osid_reset(osid_t *sid)
 
     sid->f_type = FILT_NONE;
     sid->f_freq = sid->f_res = 0;
-    sid->f_ampl = FP_1;
-    sid->d1 = sid->d2 = sid->g1 = sid->g2 = FP_0;
-    sid->xn1_l = sid->xn2_l = sid->yn1_l = sid->yn2_l = FP_0;
-    sid->xn1_r = sid->xn2_r = sid->yn1_r = sid->yn2_r = FP_0;
+    sid->f_ampl = FP8P24_1;
+    sid->d1 = sid->d2 = sid->g1 = sid->g2 = FP8P24_0;
+    sid->xn1_l = sid->xn2_l = sid->yn1_l = sid->yn2_l = FP24P8_0;
+    sid->xn1_r = sid->xn2_r = sid->yn1_r = sid->yn2_r = FP24P8_0;
 
     sid->v4_state = V4_OFF;
     sid->v4_count = sid->v4_add = 0;
@@ -1232,13 +1233,13 @@ void osid_calc_filter(osid_t *sid)
 {
     // Filter off? Then reset all coefficients
     if (sid->f_type == FILT_NONE) {
-        sid->f_ampl = FP_0;
-        sid->d1 = sid->d2 = sid->g1 = sid->g2 = FP_0;
+        sid->f_ampl = FP8P24_0;
+        sid->d1 = sid->d2 = sid->g1 = sid->g2 = FP24P8_0;
         return;
     }
 
     // Calculate resonance frequency
-    fp24p8_t fr;
+    ufp16p16_t fr;
     if (sid->f_type == FILT_LP || sid->f_type == FILT_LPBP)
         fr = ffreq_lp[sid->f_freq];
     else
@@ -1246,30 +1247,35 @@ void osid_calc_filter(osid_t *sid)
 
     // Limit to <1/2 sample frequency, avoid div by 0 in case FILT_NOTCH below
     //filt_t arg = fr / ((float) (obtained.freq >> 1));
-    fp24p8_t arg = divfp24p8(fr, itofp24p8(obtained.freq >> 1));
-    if (arg > ftofp24p8(0.99))
-        arg = ftofp24p8(0.99);
-    if (arg < ftofp24p8(0.01))
-        arg = ftofp24p8(0.01);
+    fp16p16_t arg = divufp16p16(fr, itofp16p16(obtained.freq >> 1));
+    if (arg > ftofp16p16(0.99))
+        arg = ftofp16p16(0.99);
+    if (arg < ftofp16p16(0.01))
+        arg = ftofp16p16(0.01);
+
+    //fp8p24_t argfp8p24 = _fp16p16tofp8p24(arg);
 
     // Calculate poles (resonance frequency and resonance)
     // The (complex) poles are at
     //   zp_1/2 = (-g1 +/- sqrt(g1^2 - 4*g2)) / 2
     //sid->g2 = 0.55 + 1.2 * arg * arg - 1.2 * arg + ((float) sid->f_res) * 0.0133333333;
-    sid->g2 = ftofp24p8(0.55) + mulfp24p8(mulfp24p8(ftofp24p8(1.2), arg), arg) - mulfp24p8(ftofp24p8(1.2), arg) + mulfp24p8(itofp24p8(sid->f_res), ftofp24p8(0.0133333333));
+    
+    sid->g2 = ftofp8p24(0.55) + _fp16p16tofp8p24(mulfp16p16(mulfp16p16(ftofp16p16(1.2), arg), arg)) - _fp16p16tofp8p24(mulfp16p16(ftofp16p16(1.2), arg)) + mulfp8p24(itofp8p24(sid->f_res), ftofp8p24(0.0133333333));
+
+    //sid->g2 = ftofp24p8(0.55) + mulfp24p8(mulfp24p8(ftofp24p8(1.2), arg), arg) - mulfp24p8(ftofp24p8(1.2), arg) + mulfp24p8(itofp24p8(sid->f_res), ftofp24p8(0.0133333333));
     //sid->g1 = -2.0 * sqrt(sid->g2) * cos(M_PI * arg);
-    sid->g1 = mulfp24p8(mulfp24p8(-FP_2, sqrtufp24p8(sid->g2)), FP_COS_DEG(arg));
+    sid->g1 = mulfp8p24(mulfp8p24(-FP8P24_2, sqrtufp8p24(sid->g2)), FP8P24_COS_DEG_FP16P16(arg));
 
     // Increase resonance if LP/HP combined with BP
     if (sid->f_type == FILT_LPBP || sid->f_type == FILT_HPBP)
-        sid->g2 += ftofp24p8(0.1);
+        sid->g2 += ftofp8p24(0.1);
 
     // Stabilize filter
-    if (abs(sid->g1) >= sid->g2 + FP_1) {
-        if (sid->g1 > -FP_0)
-            sid->g1 = sid->g2 + ftofp24p8(0.99);
+    if (abs(sid->g1) >= sid->g2 + FP8P24_1) {
+        if (sid->g1 > FP8P24_0)
+            sid->g1 = sid->g2 + ftofp8p24(0.99);
         else
-            sid->g1 = -(sid->g2 + ftofp24p8(0.99));
+            sid->g1 = -(sid->g2 + ftofp8p24(0.99));
     }
 
     // Calculate roots (filter characteristic) and input attenuation
@@ -1280,49 +1286,49 @@ void osid_calc_filter(osid_t *sid)
         case FILT_LPBP:
         case FILT_LP:        // Both roots at -1, H(1)=1
             //sid->d1 = 2.0; sid->d2 = 1.0;
-            sid->d1 = FP_2; sid->d2 = FP_1;
+            sid->d1 = FP8P24_2; sid->d2 = FP8P24_1;
             //f_ampl = 0.25 * (1.0 + sid->g1 + sid->g2);
-            sid->f_ampl = mulfp24p8(ftofp24p8(0.25), (FP_1 + sid->g1 + sid->g2));
+            sid->f_ampl = mulfp8p24(ftofp8p24(0.25), (FP8P24_1 + sid->g1 + sid->g2));
             break;
 
         case FILT_HPBP:
         case FILT_HP:        // Both roots at 1, H(-1)=1
             //sid->d1 = -2.0; sid->d2 = 1.0;
-            sid->d1 = -FP_2; sid->d2 = FP_1;
+            sid->d1 = -FP8P24_2; sid->d2 = FP8P24_1;
             //f_ampl = 0.25 * (1.0 - sid->g1 + sid->g2);
-            sid->f_ampl = mulfp24p8(ftofp24p8(0.25), (FP_1 - sid->g1 + sid->g2));
+            sid->f_ampl = mulfp24p8(ftofp8p24(0.25), (FP8P24_1 - sid->g1 + sid->g2));
             break;
 
         case FILT_BP: {        // Roots at +1 and -1, H_max=1
-            sid->d1 = -FP_0; sid->d2 = -FP_1;
+            sid->d1 = FP8P24_0; sid->d2 = -FP8P24_1;
             //float c = sqrt(sid->g2*sid->g2 + 2.0*sid->g2 - sid->g1*sid->g1 + 1.0);
-            fp24p8_t c = sqrtufp24p8((mulfp24p8(sid->g2, sid->g2) + mulfp24p8(FP_2, sid->g2) - mulfp24p8(sid->g1, sid->g1) + FP_1));
+            fp24p8_t c = sqrtufp8p24((mulfp8p24(sid->g2, sid->g2) + mulfp8p24(FP8P24_2, sid->g2) - mulfp8p24(sid->g1, sid->g1) + FP8P24_1));
             //sid->f_ampl = 0.25 * (-2.0*sid->g2*sid->g2 - (4.0+2.0*c)*sid->g2 - 2.0*c + (c+2.0)*sid->g1*sid->g1 - 2.0) / (-sid->g2*sid->g2 - (c+2.0)*sid->g2 - c + sid->g1*sid->g1 - 1.0);
-            sid->f_ampl = divfp24p8(mulfp24p8(ftofp24p8(0.25), (mulfp24p8(mulfp24p8(-FP_2, sid->g2), sid->g2) - mulfp24p8(FP_4+mulfp24p8(FP_2, c), sid->g2) - mulfp24p8(FP_2, c) + mulfp24p8(mulfp24p8(c+FP_2, sid->g1), sid->g1) - FP_2)), mulfp24p8(-sid->g2, sid->g2) - mulfp24p8(c+FP_2, sid->g2) - c + mulfp24p8(sid->g1, sid->g1) - FP_1);
+            sid->f_ampl = divfp8p24(mulfp8p24(ftofp8p24(0.25), (mulfp8p24(mulfp8p24(-FP8P24_2, sid->g2), sid->g2) - mulfp8p24(FP8P24_4+mulfp8p24(FP8P24_2, c), sid->g2) - mulfp8p24(FP8P24_2, c) + mulfp8p24(mulfp8p24(c+FP8P24_2, sid->g1), sid->g1) - FP8P24_2)), mulfp8p24(-sid->g2, sid->g2) - mulfp8p24(c+FP8P24_2, sid->g2) - c + mulfp8p24(sid->g1, sid->g1) - FP8P24_1);
             break;
         }
 
         case FILT_NOTCH:    // Roots at exp(i*pi*arg) and exp(-i*pi*arg), H(1)=1 (arg>=0.5) or H(-1)=1 (arg<0.5)
             //sid->d1 = -2.0 * cos(M_PI * arg); sid->d2 = 1.0;
-            sid->d1 = mulfp24p8(-FP_2, FP_COS_DEG(arg)); sid->d2 = FP_1;
-            if (arg >= ftofp24p8(0.5))
+            sid->d1 = mulfp8p24(-FP8P24_2, FP8P24_COS_DEG_FP16P16(arg)); sid->d2 = FP8P24_1;
+            if (arg >= ftofp8p24(0.5))
                 //sid->f_ampl = 0.5 * (1.0 + sid->g1 + sid->g2) / (1.0 - cos(M_PI * arg));
-                sid->f_ampl = divfp24p8(mulfp24p8(ftofp24p8(0.5), (FP_1 + sid->g1 + sid->g2)), FP_1 - FP_COS_DEG(arg));
+                sid->f_ampl = divfp8p24(mulfp8p24(ftofp8p24(0.5), (FP8P24_1 + sid->g1 + sid->g2)), FP8P24_1 - FP8P24_COS_DEG_FP16P16(arg));
             else
                 //sid->f_ampl = 0.5 * (1.0 - sid->g1 + sid->g2) / (1.0 + cos(M_PI * arg));
-                sid->f_ampl = divfp24p8(mulfp24p8(ftofp24p8(0.5), (FP_1 - sid->g1 + sid->g2)), FP_1 + FP_COS_DEG(arg));
+                sid->f_ampl = divfp8p24(mulfp8p24(ftofp8p24(0.5), (FP8P24_1 - sid->g1 + sid->g2)), FP8P24_1 + FP8P24_COS_DEG_FP16P16(arg));
             break;
 
         // The following is pure guesswork...
         case FILT_ALL:        // Roots at 2*exp(i*pi*arg) and 2*exp(-i*pi*arg), H(-1)=1 (arg>=0.5) or H(1)=1 (arg<0.5)
             //sid->d1 = -4.0 * cos(M_PI * arg); sid->d2 = 4.0;
-            sid->d1 = mulfp24p8(-FP_4, FP_COS_DEG(arg)); sid->d2 = FP_4;
+            sid->d1 = mulfp8p24(-FP8P24_4, FP8P24_COS_DEG_FP16P16(arg)); sid->d2 = FP8P24_4;
             if (arg >= 0.5)
                 //sid->f_ampl = (1.0 - sid->g1 + sid->g2) / (5.0 + 4.0 * cos(M_PI * arg));
-                sid->f_ampl = divfp24p8(FP_1 - sid->g1 + sid->g2, ftofp24p8(5.0) + mulfp24p8(FP_4, FP_COS_DEG(arg)));
+                sid->f_ampl = divfp8p24(FP8P24_1 - sid->g1 + sid->g2, ftofp8p24(5.0) + mulfp8p24(FP8P24_4, FP8P24_COS_DEG_FP16P16(arg)));
             else
                 //sid->f_ampl = (1.0 + sid->g1 + sid->g2) / (5.0 - 4.0 * cos(M_PI * arg));
-                sid->f_ampl = divfp24p8(FP_1 + sid->g1 + sid->g2, ftofp24p8(5.0) - mulfp24p8(FP_4, FP_COS_DEG(arg)));
+                sid->f_ampl = divfp8p24(FP8P24_1 + sid->g1 + sid->g2, ftofp8p24(5.0) - mulfp8p24(FP8P24_4, FP8P24_COS_DEG_FP16P16(arg)));
             break;
 
         default:
@@ -1501,8 +1507,8 @@ void osid_write(osid_t *sid, uint32 adr, uint32 byte, cycle_t now, bool rmw)
             sid->voice[2].mute = byte & 0x80;
             if (((byte >> 4) & 7) != sid->f_type) {
                 sid->f_type = (byte >> 4) & 7;
-                sid->xn1_l = sid->xn2_l = sid->yn1_l = sid->yn2_l = FP_0;
-                sid->xn1_r = sid->xn2_r = sid->yn1_r = sid->yn2_r = FP_0;
+                sid->xn1_l = sid->xn2_l = sid->yn1_l = sid->yn2_l = FP24P8_0;
+                sid->xn1_r = sid->xn2_r = sid->yn1_r = sid->yn2_r = FP24P8_0;
                 if (enable_filters)
                     osid_calc_filter(sid);
             }
