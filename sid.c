@@ -1256,7 +1256,7 @@ void osid_calc_filter(osid_t *sid)
     // The (complex) poles are at
     //   zp_1/2 = (-g1 +/- sqrt(g1^2 - 4*g2)) / 2
     //sid->g2 = 0.55 + 1.2 * arg * arg - 1.2 * arg + ((float) sid->f_res) * 0.0133333333;
-    sid->g2 = ftofp24p8(0.55) + mulfp24p8(mulfp24p8(ftofp24p8(1.2), arg), arg) + mulfp24p8(itofp24p8(sid->f_res), ftofp24p8(0.0133333333));
+    sid->g2 = ftofp24p8(0.55) + mulfp24p8(mulfp24p8(ftofp24p8(1.2), arg), arg) - mulfp24p8(ftofp24p8(1.2), arg) + mulfp24p8(itofp24p8(sid->f_res), ftofp24p8(0.0133333333));
     //sid->g1 = -2.0 * sqrt(sid->g2) * cos(M_PI * arg);
     sid->g1 = mulfp24p8(mulfp24p8(-FP_2, sqrtufp24p8(sid->g2)), FP_COS_DEG(arg));
 
